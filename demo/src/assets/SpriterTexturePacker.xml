@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with TexturePacker http://texturepacker.com-->
+<!-- $TexturePacker:SmartUpdate:2611cfae9a0d11750da009fd7aa9077a$ -->
+<TextureAtlas imagePath="SpriterTexturePacker.png">
+    <SubTexture name="bardbarian/beard" x="171" y="294" width="177" height="139"/>
+    <SubTexture name="bardbarian/body" x="2" y="500" width="189" height="197"/>
+    <SubTexture name="bardbarian/flutehand0" x="193" y="605" width="188" height="84"/>
+    <SubTexture name="bardbarian/flutehand1" x="454" y="925" width="188" height="97"/>
+    <SubTexture name="bardbarian/flutehand2" x="430" y="673" width="188" height="100"/>
+    <SubTexture name="bardbarian/flutehand3" x="644" y="923" width="188" height="98"/>
+    <SubTexture name="bardbarian/flutehand4" x="371" y="796" width="188" height="100"/>
+    <SubTexture name="bardbarian/guitar" x="383" y="601" width="91" height="70"/>
+    <SubTexture name="bardbarian/hair" x="608" y="877" width="47" height="44"/>
+    <SubTexture name="bardbarian/hand0" x="718" y="650" width="61" height="94"/>
+    <SubTexture name="bardbarian/hand1" x="367" y="691" width="61" height="103"/>
+    <SubTexture name="bardbarian/hand2" x="318" y="495" width="61" height="105"/>
+    <SubTexture name="bardbarian/hand3" x="304" y="691" width="61" height="104"/>
+    <SubTexture name="bardbarian/hand4" x="381" y="495" width="61" height="104"/>
+    <SubTexture name="bardbarian/head" x="620" y="650" width="96" height="95"/>
+    <SubTexture name="bardbarian/headblink" x="443" y="396" width="96" height="95"/>
+    <SubTexture name="bardbarian/helmet" x="132" y="699" width="170" height="120" frameX="-4" frameY="-30" frameWidth="180" frameHeight="150"/>
+    <SubTexture name="bardbarian/loincloth" x="100" y="442" width="47" height="55"/>
+    <SubTexture name="bardbarian/shoebig" x="533" y="595" width="47" height="57"/>
+    <SubTexture name="bardbarian/shoesmall" x="657" y="843" width="42" height="51"/>
+    <SubTexture name="bardbarian/shoulder" x="537" y="493" width="82" height="100" frameX="-9" frameY="-30" frameWidth="100" frameHeight="130"/>
+    <SubTexture name="blue" x="2" y="699" width="128" height="128"/>
+    <SubTexture name="mage/Mage_projectile" x="561" y="877" width="45" height="45"/>
+    <SubTexture name="mage/mage_0000_handfront" x="103" y="957" width="45" height="60"/>
+    <SubTexture name="mage/mage_0001_hat - Copy" x="113" y="829" width="131" height="122"/>
+    <SubTexture name="mage/mage_0001_hat" x="113" y="829" width="131" height="122"/>
+    <SubTexture name="mage/mage_0002_head" x="640" y="747" width="86" height="94"/>
+    <SubTexture name="mage/mage_0003_body" x="270" y="929" width="94" height="86"/>
+    <SubTexture name="mage/mage_0004_handback" x="782" y="839" width="39" height="47"/>
+    <SubTexture name="mage/mage_0005_shoe1" x="834" y="965" width="42" height="40"/>
+    <SubTexture name="mage/mage_0006_shoe2" x="834" y="923" width="42" height="40"/>
+    <SubTexture name="orc/orc_0000_eyes" x="782" y="888" width="71" height="33"/>
+    <SubTexture name="orc/orc_0000_eyes_closed" x="182" y="276" width="71" height="9" frameX="0" frameY="-12" frameWidth="71" frameHeight="33"/>
+    <SubTexture name="orc/orc_0001_head" x="2" y="829" width="109" height="126"/>
+    <SubTexture name="orc/orc_0002_thing_!" x="100" y="294" width="69" height="146"/>
+    <SubTexture name="orc/orc_0003_hand1" x="366" y="929" width="86" height="85"/>
+    <SubTexture name="orc/orc_0004_body" x="2" y="2" width="178" height="290"/>
+    <SubTexture name="orc/orc_0005_hand2 - Copy" x="2" y="294" width="96" height="204"/>
+    <SubTexture name="orc/orc_0006_foot1" x="2" y="957" width="99" height="62"/>
+    <SubTexture name="orc/orc_0007_foot2" x="302" y="435" width="82" height="58"/>
+    <SubTexture name="puki/puki_0000_handpunch" x="193" y="497" width="123" height="106"/>
+    <SubTexture name="puki/puki_0000_handpunch_black" x="246" y="821" width="123" height="106"/>
+    <SubTexture name="puki/puki_0001_hand" x="210" y="953" width="58" height="69"/>
+    <SubTexture name="puki/puki_0001_hand_black" x="150" y="953" width="58" height="69"/>
+    <SubTexture name="puki/puki_0003_mouth2" x="338" y="269" width="40" height="23"/>
+    <SubTexture name="puki/puki_0004_mouth" x="432" y="898" width="59" height="25"/>
+    <SubTexture name="puki/puki_0004_mouth_black" x="371" y="898" width="59" height="25"/>
+    <SubTexture name="puki/puki_0005_Eyes3" x="350" y="396" width="80" height="36"/>
+    <SubTexture name="puki/puki_0006_Eyes2" x="728" y="796" width="79" height="41"/>
+    <SubTexture name="puki/puki_0007_Eyes" x="878" y="2" width="80" height="39"/>
+    <SubTexture name="puki/puki_0008_headband" x="582" y="595" width="151" height="53"/>
+    <SubTexture name="puki/puki_0008_headband_black" x="149" y="442" width="151" height="53"/>
+    <SubTexture name="puki/puki_0009_head" x="338" y="2" width="154" height="135"/>
+    <SubTexture name="puki/puki_0009_head_black" x="182" y="139" width="154" height="135"/>
+    <SubTexture name="puki/puki_0009_head_red" x="182" y="2" width="154" height="135"/>
+    <SubTexture name="puki/puki_0010_body" x="350" y="294" width="117" height="100"/>
+    <SubTexture name="puki/puki_0010_body_black" x="444" y="493" width="91" height="100" frameX="-13" frameY="0" frameWidth="117" frameHeight="100"/>
+    <SubTexture name="puki/puki_0010_body_skinny" x="561" y="775" width="77" height="100" frameX="-20" frameY="0" frameWidth="117" frameHeight="100"/>
+    <SubTexture name="puki/puki_0011_hand2" x="476" y="595" width="55" height="58"/>
+    <SubTexture name="puki/puki_0011_hand2_black" x="386" y="434" width="55" height="58"/>
+    <SubTexture name="puki/puki_0012_littlefoot" x="960" y="42" width="59" height="38"/>
+    <SubTexture name="puki/puki_0012_littlefoot_black" x="960" y="2" width="59" height="38"/>
+    <SubTexture name="puki/puki_0013_bigfoot" x="728" y="746" width="79" height="48"/>
+    <SubTexture name="puki/puki_0013_bigfoot_black" x="701" y="843" width="79" height="48"/>
+    <SubTexture name="red" x="338" y="139" width="128" height="128"/>
+</TextureAtlas>

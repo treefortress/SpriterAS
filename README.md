@@ -1,4 +1,4 @@
-SpriterAS
-=========
+SpriterStarling
+===============
 
-An AS3 library for rendering Spriter Animations (SCML) with Starling
+Library for reading and playing back Spriter Animation Files (SCML)

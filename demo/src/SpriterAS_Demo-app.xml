@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<application xmlns="http://ns.adobe.com/air/application/3.5">
+ 
+	<id>ca.esdot.SpriterStarling</id>
+	<filename>SpriterStarling</filename>
+	<name>SpriterStarling</name>
+	<versionNumber>0.0.1</versionNumber>
+ 
+	<initialWindow>
+	    <content>[This value will be overwritten by Flash Builder in the output app.xml]</content>
+	    <visible>true</visible>
+	    <aspectRatio>landscape</aspectRatio>
+	    <autoOrients>true</autoOrients>
+	    <fullScreen>true</fullScreen>
+	    <renderMode>direct</renderMode>
+	</initialWindow>
+ 
+<!--
+	<icon>
+	    <image57x57>/assets/icons/icon-57.png</image57x57>
+	    <image72x72>/assets/icons/icon-72.png</image72x72>
+	    <image114x114>/assets/icons/icon-57@2x.png</image114x114>
+	</icon>
+-->
+ 
+	<iPhone>
+        <InfoAdditions><![CDATA[
+		<key>UIDeviceFamily</key>
+		<array>
+			<string>1</string>
+			<string>2</string>
+		</array>
+		<key>UIPrerenderedIcon</key>
+		<true/>
+	]]></InfoAdditions>
+        <requestedDisplayResolution>high</requestedDisplayResolution>
+    	</iPhone>
+ 
+    <android>
+	    <colorDepth>16bit</colorDepth> 
+        <manifestAdditions><![CDATA[
+		<manifest android:installLocation="preferExternal">
+			<uses-sdk android:targetSdkVersion="11"/> <!-- Prevents certain bugs on Android 4.0 -->
+			<uses-permission android:name="android.permission.INTERNET"/>
+ 		</manifest>
+	]]>
+	</manifestAdditions>
+    	</android>
+ 
+</application>

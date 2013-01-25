@@ -3,10 +3,10 @@ SpriterStarling
 
 Library for playing back Spriter Animation Files (SCML)
 
-For more details code examples, check out this blog post:
+For more details code examples, check out this blog post:  
 http://treefortress.com/introducing-spriteras-play-spriter-animations-scml-with-starling/
 
-Or, you can check out some of the online demo's:
+Or, you can check out some of the online code Example's:  
 https://github.com/treefortress/SpriterAS/tree/master/demo/src
 
 

@@ -25,8 +25,8 @@ Library for playing back Spriter Animation Files (SCML)
 
 #Add callback's for specific events
 
-	//Add callback @ 800ms
-	brawler.addCallback(onArrowShot, 800)
+	//Add callback @ 400ms
+	brawler.addCallback(onPunch, 400)
 
 #Swap Body Parts
 
@@ -51,12 +51,12 @@ Library for playing back Spriter Animation Files (SCML)
 
 #Map External Sprites to Specific Body Parts
 
-	//Create a normal standardf Particle Emitter
+	//Create a standard Starling Particle Emitter
 	emitterFront = new PDParticleSystem(particleXml, particleTex);
 	addChild(emitterFront);
 
 	//Each frame, update the particle emitter so it appears to follow the character's hand
-	public function advanceTime(time:Number):void {
+	public function tick(time:Number):void {
 		var frontHand:Image = brawler.getImage("mage_0000_handfront");
 		emitterFront.emitterX = brawler.x + frontHand.x;
 		emitterFront.emitterY = brawler.y + frontHand.y;

@@ -350,6 +350,10 @@ package treefortress.spriter
 			}
 		}
 		
+		public function includePiece(piece:*):void {
+			excludePiece(piece, false);
+		}
+		
 		public function swapPiece(piece:String, newPiece:String):void {
 			if(animations.prefix && piece.indexOf(animations.prefix) == -1){
 				piece = animations.prefix + piece;

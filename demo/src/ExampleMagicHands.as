@@ -25,6 +25,7 @@ package
 		[Embed(source="/assets/particles/firehands/texture.png")]
 		public static var particleBitmap:Class;
 		
+		
 		protected var spriter:SpriterClip;
 		protected var loader:SpriterLoader;
 		protected var dragTarget:DisplayObject;
@@ -38,7 +39,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/mage/mage.scml"], .75);
+			loader.load(["assets/spriter/mage/mage.scml"], .75);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {

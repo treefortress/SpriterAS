@@ -36,7 +36,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/orc/orc.scml"], .5);
+			loader.load(["assets/spriter/orc/orc.scml"], .5);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {

@@ -38,7 +38,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["assets/spriter/mage/mage.scml"], .75);
+			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/mage/mage.scml"], .75);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {

@@ -21,7 +21,7 @@ package treefortress.spriter
 	{
 		protected static var TO_RADS:Number = Math.PI/180;
 		
-		//Protected
+		// Protected
 		protected var textureAtlas:TextureAtlas;
 		protected var animations:AnimationSet;
 		protected var container:Sprite;
@@ -38,7 +38,7 @@ package treefortress.spriter
 		
 		protected var _isPlaying:Boolean;
 		
-		/** Public **/
+		// Public
 		public var animation:Animation;
 		public var animationComplete:Signal;
 		public var playbackSpeed:Number = 1;
@@ -48,7 +48,7 @@ package treefortress.spriter
 		public var animationFactor:Number = 1;
 		public var ignoredPieces:Object;
 		
-		/** HELPERS VARS, declared at the class level to avoid any instanciation in the main update loop. */
+		// tmp vars, to avoid memory allocation in the main loop. */
 		protected var lastTime:int;
 		protected var updateFrame:Boolean;
 		protected var timelineId:int;
@@ -72,7 +72,7 @@ package treefortress.spriter
 		protected var angle1:Number;
 		protected var angle2:Number;
 		protected var rangeValue:Number;
-		/* END HELPER VARS */
+		// end tmp vars
 		
 		public function SpriterClip(animations:AnimationSet, textureAtlas:TextureAtlas){
 			this.textureAtlas = textureAtlas;
@@ -87,7 +87,7 @@ package treefortress.spriter
 			container = new Sprite();
 			addChild(container);
 			
-			animationComplete = new Signal();
+			animationComplete = new Signal(SpriterClip);
 			this.touchable = false;
 		}
 		
@@ -102,6 +102,11 @@ package treefortress.spriter
 			
 			
 		public function get isPlaying():Boolean { return _isPlaying; }
+		
+		public function setPosition(x:int, y:int):void {
+			this.x = x;
+			this.y = y;
+		}
 		
 		public function play(name:String, startPosition:int = 0, clearCallbacks:Boolean = false):void {
 			if(!animations.getByName(name)){
@@ -133,12 +138,9 @@ package treefortress.spriter
 		
 		public function update(elapsed:int = 0, forceNextFrame:Boolean = false):void {
 			if(!_isPlaying){ return; }; // Exit if we're not currently playing
-			//if(elapsed > 50){ elapsed = 50; }
 			
 			position += elapsed * playbackSpeed;
 			updateCallbacks();
-			
-			updateFrame = true;
 			
 			minX = minY = int.MAX_VALUE;
 			startTime = frame.time;
@@ -147,10 +149,9 @@ package treefortress.spriter
 			if(endTime == 0){ endTime = animation.length; }
 			
 			lastTime = getTimer();
-			//Large, total frame update (updates z-depth)
+			
+		//Large, Key-Frame update (updates z-depth)
 			if((position == 0) || forceNextFrame || position > endTime || position > animation.length){
-				
-				//updateFrame = false;
 				
 				//Advance playhead
 				if(frameIndex < animation.mainline.keys.length - 2){
@@ -164,14 +165,13 @@ package treefortress.spriter
 					}
 					if(animation.mainline.keys[frameIndex].time > position){
 						frameIndex--;
-						//updateFrame = true;
 					}
 				} else { frameIndex = 0; }
 				
 				//Animation complete?
 				if(position > animation.length){ 
 					position = 0; 
-					animationComplete.dispatch();
+					animationComplete.dispatch(this);
 					
 					for(i = callbackList.length - 1; i >= 0; i--){
 						callbackList[i].called = false;
@@ -234,60 +234,57 @@ package treefortress.spriter
 				}
 				
 			}
-			//Incremental interpolated update
- 			if(updateFrame) {
+			
+		//Small, Incremental interpolated update
+ 			lerpAmount = (position - startTime)/(endTime - startTime);
+			spinDir = 0;
+			
+			for(i = 0, l = frame.refs.length; i < l; i++){
+				timeline = animation.timelineList[frame.refs[i].timeline];
+				key = timeline.keys[frame.refs[i].key];
+				child = key.child;
+				nextChild = timeline.keys[frame.refs[i].key + 1].child;
 				
-				lerpAmount = (position - startTime)/(endTime - startTime);
-				//trace(amount);
-				spinDir = 0;
+				image = imagesByTimeline[timeline.id];
+				if(!image){
+					image = createImageByName(child.piece.name);
+					imagesByTimeline[timelineId] = image;
+				}
 				
-				for(i = 0, l = frame.refs.length; i < l; i++){
-					timeline = animation.timelineList[frame.refs[i].timeline];
-					key = timeline.keys[frame.refs[i].key];
-					child = key.child;
-					nextChild = timeline.keys[frame.refs[i].key + 1].child;
+				//If this piece is set to be ignored, do not update any of it's position data
+				if(ignoredPieces[image.name]){ continue; }
+				
+				if(child.pixelPivotX != nextChild.pixelPivotX){
+					image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
+				}
+				if(child.pixelPivotY != nextChild.pixelPivotY){
+					image.pivotY = lerp(child.pixelPivotY, nextChild.pixelPivotY, lerpAmount);
+				}
+				if(child.x != nextChild.x){
+					image.x = lerp(child.x, nextChild.x, lerpAmount);
+				}
+				if(child.y != nextChild.y){
+					image.y = lerp(-child.y, -nextChild.y, lerpAmount);
+				}
+				if(child.scaleX != nextChild.scaleX){
+					image.scaleX = lerp(child.scaleX, nextChild.scaleX, lerpAmount);
+				}
+				if(child.scaleY != nextChild.scaleY){
+					image.scaleY = lerp(child.scaleY, nextChild.scaleY, lerpAmount);
+				}
+				if(child.angle != nextChild.angle){
 					
-					image = imagesByTimeline[timeline.id];
-					if(!image){
-						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId] = image;
-					}
+					//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)
+					angle1 = child.angle;
+					angle2 = nextChild.angle;
 					
-					//If this piece is set to be ignored, do not update any of it's position data
-					if(ignoredPieces[image.name]){ continue; }
+					rangeValue = angle2 - angle1;
 					
-					if(child.pixelPivotX != nextChild.pixelPivotX){
-						image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
-					}
-					if(child.pixelPivotY != nextChild.pixelPivotY){
-						image.pivotY = lerp(child.pixelPivotY, nextChild.pixelPivotY, lerpAmount);
-					}
-					if(child.x != nextChild.x){
-						image.x = lerp(child.x, nextChild.x, lerpAmount);
-					}
-					if(child.y != nextChild.y){
-						image.y = lerp(-child.y, -nextChild.y, lerpAmount);
-					}
-					if(child.scaleX != nextChild.scaleX){
-						image.scaleX = lerp(child.scaleX, nextChild.scaleX, lerpAmount);
-					}
-					if(child.scaleY != nextChild.scaleY){
-						image.scaleY = lerp(child.scaleY, nextChild.scaleY, lerpAmount);
-					}
-					if(child.angle != nextChild.angle){
-						
-						//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)
-						angle1 = child.angle;
-						angle2 = nextChild.angle;
-						
-						rangeValue = angle2 - angle1;
-						
-						if (rangeValue > 180) { rangeValue -= 360; }
-						else if (rangeValue < -180) { rangeValue += 360; }
-						
-						r = angle1 + rangeValue * lerpAmount;						
-						image.rotation = r * TO_RADS;
-					}
+					if (rangeValue > 180) { rangeValue -= 360; }
+					else if (rangeValue < -180) { rangeValue += 360; }
+					
+					r = angle1 + rangeValue * lerpAmount;						
+					image.rotation = r * TO_RADS;
 				}
 			}
 		}
@@ -311,7 +308,6 @@ package treefortress.spriter
 		}
 		
 		protected function createImageByName(name:String):Image {
-//			/name = name;
 			//Check if there's an existing swap for this image
 			var swapName:String = name;
 			if(swapHash[name]){ swapName = swapHash[name]; }
@@ -358,8 +354,6 @@ package treefortress.spriter
 			if(animations.prefix && piece.indexOf(animations.prefix) == -1){
 				piece = animations.prefix + piece;
 			}
-			//var oldTex:Texture = texturesByName[piece];
-			//if(!oldTex){ return; } //Can't swap if we can't find this textures
 			
 			var newTex:Texture = getTexture(newPiece);
 			if(!newTex){ return; } //Can't swap if we can't find this textures

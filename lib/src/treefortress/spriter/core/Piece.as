@@ -7,5 +7,9 @@ package treefortress.spriter.core
 		public var width:int;
 		public var height:int;
 		
+		public function Piece() {
+			
+		}
+		
 	}
 }

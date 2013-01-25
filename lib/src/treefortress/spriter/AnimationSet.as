@@ -18,17 +18,13 @@ package treefortress.spriter
 		public var name:String;
 		
 		protected var animationsByName:Object = {};
-		public static var scale:Number;
+		protected var _scale:Number;
 		
-		public function AnimationSet(data:XML, scale:Number = NaN, parentFolder:String = null){
+		public function AnimationSet(data:XML, scale:Number = 1, parentFolder:String = null){
 			prefix = parentFolder || "";
 			if(prefix != ""){ prefix += "/"; }
 			
-			if(!isNaN(AnimationSet.scale) && isNaN(scale)){
-				scale = AnimationSet.scale;
-			} else if(isNaN(scale)){
-				scale = 1;
-			}
+			_scale = scale;
 			
 			pieces = new <Piece>[];
 			for each(var folderXml:XML in data.folder){
@@ -38,8 +34,8 @@ package treefortress.spriter
 					piece.name = prefix + file.@name;
 					piece.name = piece.name.split(".")[0];
 					
-					piece.width = file.@width * scale;
-					piece.height = file.@height * scale;
+					piece.width = file.@width * _scale;
+					piece.height = file.@height * _scale;
 					pieces.push(piece);					
 				}
 			}
@@ -59,7 +55,7 @@ package treefortress.spriter
 				anim.name = animData.@name;
 				anim.length = animData.@length;
 				anim.looping = (animData.@looping == undefined);
-				//trace(anim.name, anim.looping);
+				
 				//Add timelines
 				for each(var timelineData:XML in animData.timeline) {
 					timelineKeys = new <TimelineKey>[];
@@ -72,12 +68,14 @@ package treefortress.spriter
 						timelineKey.time = keyData.@time;
 						timelineKey.spin = keyData.@spin;
 						
+						//Check whether it's a bone (Assume: if not an object, it must be a bone)
 						var isBone:Boolean = false;
 						var childData:XML = keyData..object[0];
-						if(!childData){ //If not an object, it must be a bone.
+						if(!childData){ 
 							childData = keyData..bone[0];
 							isBone = true;
 						}
+						
 						var child:Child = new Child();
 						child.x = childData.@x * scale;
 						child.y = childData.@y * scale;
@@ -89,6 +87,7 @@ package treefortress.spriter
 						} else { rotation = -rotation; }
 						child.angle = rotation;
 						
+						//Ignore bones
 						if(!isBone){
 							child.piece = pieces[childData.@file];
 							child.pivotX = (childData.@pivot_x == undefined)? 0 : childData.@pivot_x;
@@ -129,10 +128,13 @@ package treefortress.spriter
 				anim.mainline = new Mainline(mainlineKeys);
 				animationsByName[anim.name] = anim;
 				animationList.push(anim);
-				//_animations.push(new DataAnimation(anim, _folders, onAnimChangeFrame));
 			}
 		}
 		
+		public function get scale():Number {
+			return _scale;
+		}
+
 		public function getByName(name:String):Animation {
 			return animationsByName[name];
 		}

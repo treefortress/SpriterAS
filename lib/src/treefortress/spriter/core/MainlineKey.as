@@ -7,8 +7,7 @@ package treefortress.spriter.core
 		public var time:int;
 		public var refs:Vector.<ChildReference>;
 		
-		public function MainlineKey()
-		{
+		public function MainlineKey() {
 		}
 	}
 }

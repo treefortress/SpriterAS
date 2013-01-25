@@ -7,8 +7,8 @@ package treefortress.spriter.core
 		public var spin:int;
 		public var child:Child;
 		
-		public function TimelineKey()
-		{
+		public function TimelineKey(){
+			
 		}
 	}
 }

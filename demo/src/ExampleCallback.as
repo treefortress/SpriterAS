@@ -36,7 +36,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["assets/spriter/orc/orc.scml"], .5);
+			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/orc/orc.scml"], .5);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {
@@ -49,7 +49,7 @@ package
 			addChild(spriter);
 			
 			//To determing when an animation has completed, just listen for the animationComplete signal.
-			spriter.animationComplete.add(function() {
+			spriter.animationComplete.add(function(clip:SpriterClip) {
 				trace("animationComplete");
 			});
 			

@@ -75,20 +75,6 @@ package treefortress.spriter
 				pathsByLoader[loader] = pathChunks.join("/");
 				xmlLoaders.push(loader);
 			}
-			/*
-			finder = new FileFinder();
-			searchDir = File.applicationDirectory.resolvePath("assets/spriter");
-			finder.addEventListener(Event.COMPLETE, function():void {
-				for(var i:int = 0, l:int = finder.fileList.length; i < l; i++){
-					loaders[i]  = new URLImageLoader();
-					loaders[i].addEventListener(Event.COMPLETE, onLoadComplete, false, 0, true);
-					loaders[i].loadImage(finder.fileList[i]);
-				}
-			});
-			
-			onBuildComplete = onComplete;
-			finder.run([searchDir.url]);
-			*/
 		}
 		
 		protected function onLoadFailed(event:IOErrorEvent):void {
@@ -100,7 +86,6 @@ package treefortress.spriter
 			var loader:URLLoader = (event.target as URLLoader);
 			var xml:XML = new XML(loader.data);
 			scmlByName[namesByLoader[loader]] = xml;
-			//trace("[SpriterLoader] Load Completed: " + namesByLoader[loader]);
 			
 			var pieces:XMLList = xml..file;
 			//Load each piece
@@ -132,7 +117,6 @@ package treefortress.spriter
 			
 			//Check if complete
 			if(imageLoaders.length == 0){
-				//Logger.log("[SpriterLoader] Images Loaded in: " + (getTimer() - loadStart) + "ms", false);
 				buildAtlas();
 			}
 			
@@ -140,7 +124,7 @@ package treefortress.spriter
 		
 		protected function buildAtlas():void {
 			
-			textureAtlas = AtlasBuilder.buildFromBitmaps(pieces, _textureScale, 2, 2048, 2048);
+			textureAtlas = AtlasBuilder.buildFromBitmaps(pieces, _textureScale, 2, 512, 512);
 			atlasXml = AtlasBuilder.atlasXml;
 			atlasBitmap = AtlasBuilder.atlasBitmap;
 			
@@ -152,7 +136,6 @@ package treefortress.spriter
 			}
 		
 			completed.dispatch(this);
-			//Logger.log("[SpriterLoader] Load completed in: " + (getTimer() - loadStart) + "ms", false);
 			
 		}
 		

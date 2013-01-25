@@ -5,47 +5,50 @@ package
 	import flash.display.StageScaleMode;
 	import flash.text.TextField;
 	import flash.text.TextFormat;
-	import flash.utils.getTimer;
 	import flash.utils.setTimeout;
 	
 	import starling.core.Starling;
-	import starling.display.Quad;
 	import starling.display.Sprite;
 	
 	[SWF(width='700', height='350', backgroundColor="#FFFFFF")]
 	public class SpriterAS_Demo extends flash.display.Sprite
 	{	
 		public static var _stage:flash.display.Stage;
-		
 		protected var _starling:Starling;
 		
-		public static var scaleFactor:Number = 1;
-		
-		protected var lastTick:int;
 		protected static var title:TextField;
 		protected static var desc:TextField;
-		protected var bg:Quad;
 		
-		/**
-		 * FEATURES
-		 * All animations run off a single TextureAtlas
-		 * TextureAtlas can easily be scaled to various screen sizes
-		 * Dynamically load textures from SCML Files, Folder's, or from TexturePacker
-		 * Swap parts mid-animation (eyes > eyes_blink, sword_1 > sword_2)
-		 * Control playback speed independant of stage framerate
-		 */
+		protected var currentExample:Class;
 		
 		public function SpriterAS_Demo(){
 			
+		//Bootstrap	
 			SpriterAS_Demo._stage = stage;
 			_stage.scaleMode = StageScaleMode.NO_SCALE;
 			_stage.align = StageAlign.TOP_LEFT;
 			_stage.frameRate = 60;
+			setTimeout(initStarlng, 250);
 			
-			setTimeout(function(){
-				initStarlng();
-			}, 250);
-			lastTick = getTimer();
+		//Choose Example:
+			
+			//Simple demo showing the different method to loading a Spriter animation
+			//currentExample = ExampleBasic;
+			
+			//Swap-Demo, showing a dynamic blink animation
+			currentExample = ExampleSwapping;
+			
+			//Callback / Trigger Event demo
+			currentExample = ExampleCallback;
+			
+			//Drag and Drop Example
+			currentExample = ExampleDragAndDrop;
+			
+			//Map external display objects to specific body-parts
+			currentExample = ExampleMagicHands;
+			
+			//Advanced loading techniques
+			//currentExample = ExampleLoading;
 		}
 	
 		protected function initStarlng():void {
@@ -53,34 +56,11 @@ package
 			_starling.showStats = true;
 			_starling.start();
 			_starling.addEventListener("rootCreated", function(){
-				
 				initText();
-				initDemo();
 				
+				var root:Sprite = Starling.current.root as Sprite;
+				root.addChild(new currentExample());
 			});
-		}
-		
-		protected function initDemo():void {
-			var root:Sprite = Starling.current.root as Sprite;
-			
-			//Simple demo showing the different method to loading a Spriter animation
-			//root.addChild(new ExampleBasic());
-			
-			//Swap-Demo, showing a dynamic blink animation
-			//root.addChild(new ExampleSwapping());
-			
-			//Callback / Event demo
-			//root.addChild(new ExampleCallback());
-			
-			//Drag and Drop Example
-			//root.addChild(new ExampleDragAndDrop());
-			
-			//Follow Piece
-			root.addChild(new ExampleMagicHands());
-			
-			//root.addChild(new Debug());
-			
-			
 		}
 		
 		protected function initText():void {

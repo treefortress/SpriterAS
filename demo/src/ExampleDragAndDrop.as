@@ -25,7 +25,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["assets/spriter/brawler/brawler.scml"], .75);
+			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/brawler/brawler.scml"], .75);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {

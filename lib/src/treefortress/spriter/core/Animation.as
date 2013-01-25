@@ -10,10 +10,8 @@ package treefortress.spriter.core
 		
 		public var timelineList:Vector.<Timeline>;
 		public var mainline:Mainline;
-		
 	
-		public function Animation()
-		{
+		public function Animation() {
 			timelineList = new <Timeline>[];
 		}
 	}

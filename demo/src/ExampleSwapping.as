@@ -30,7 +30,7 @@ package
 			
 			loader = new SpriterLoader();
 			loader.completed.addOnce(onLoadComplete);
-			loader.load(["assets/spriter/orc/orc.scml"], .5);
+			loader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/orc/orc.scml"], .5);
 		}
 		
 		protected function onLoadComplete(loader:SpriterLoader):void {
@@ -52,7 +52,7 @@ package
 		
 		protected function attack():void {
 			spriter.play("attack");
-			spriter.animationComplete.addOnce(function(){
+			spriter.animationComplete.addOnce(function(spriterClip:SpriterClip){
 				spriter.play("idle");
 			});
 		}

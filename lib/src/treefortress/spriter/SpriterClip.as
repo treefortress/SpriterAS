@@ -147,18 +147,39 @@ package treefortress.spriter
 			endTime = nextFrame? nextFrame.time : 0;
 			
 			if(endTime == 0){ endTime = animation.length; }
-			
 			lastTime = getTimer();
 			
-		//Large, Key-Frame update (updates z-depth)
-			if((position == 0) || forceNextFrame || position > endTime || position > animation.length){
-				
+			//Determine whether we need to advance a frame
+			var advanceFrame:Boolean = false;
+			
+			//Clip is just starting...
+			if(position == 0 || frameIndex == 0){ advanceFrame = true; }
+			
+			//Key frame has been passed
+			if(position > endTime){ 
+				advanceFrame = true; 
+				if(frameIndex == animation.mainline.keys.length - 2){
+					advanceFrame = false;
+				}
+			}
+			
+			//Animation has completed.
+			if(position > animation.length){ 
+				advanceFrame = true; 
+			}
+			
+			//Explicit override 
+			if(forceNextFrame){ advanceFrame = true; }
+			
+			//Next KeyFrame
+			if(advanceFrame){
+	
 				//Advance playhead
 				if(frameIndex < animation.mainline.keys.length - 2){
 					if(frameIndex == -1){ frameIndex = 0; }
 					while(animation.mainline.keys[frameIndex].time < position){
 						frameIndex++;
-						if(frameIndex >= animation.mainline.keys.length - 2){
+						if(frameIndex > animation.mainline.keys.length - 2){
 							frameIndex = animation.mainline.keys.length - 2;
 							break; 
 						}
@@ -232,61 +253,70 @@ package treefortress.spriter
 					animationWidth = Math.abs(minX * 2) + container.width;
 					animationHeight =  Math.abs(minY * 2) + container.height;
 				}
-				
 			}
 			
 		//Small, Incremental interpolated update
- 			lerpAmount = (position - startTime)/(endTime - startTime);
-			spinDir = 0;
-			
-			for(i = 0, l = frame.refs.length; i < l; i++){
-				timeline = animation.timelineList[frame.refs[i].timeline];
-				key = timeline.keys[frame.refs[i].key];
-				child = key.child;
-				nextChild = timeline.keys[frame.refs[i].key + 1].child;
+ 			if(position < endTime){
 				
-				image = imagesByTimeline[timeline.id];
-				if(!image){
-					image = createImageByName(child.piece.name);
-					imagesByTimeline[timelineId] = image;
-				}
-				
-				//If this piece is set to be ignored, do not update any of it's position data
-				if(ignoredPieces[image.name]){ continue; }
-				
-				if(child.pixelPivotX != nextChild.pixelPivotX){
-					image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
-				}
-				if(child.pixelPivotY != nextChild.pixelPivotY){
-					image.pivotY = lerp(child.pixelPivotY, nextChild.pixelPivotY, lerpAmount);
-				}
-				if(child.x != nextChild.x){
-					image.x = lerp(child.x, nextChild.x, lerpAmount);
-				}
-				if(child.y != nextChild.y){
-					image.y = lerp(-child.y, -nextChild.y, lerpAmount);
-				}
-				if(child.scaleX != nextChild.scaleX){
-					image.scaleX = lerp(child.scaleX, nextChild.scaleX, lerpAmount);
-				}
-				if(child.scaleY != nextChild.scaleY){
-					image.scaleY = lerp(child.scaleY, nextChild.scaleY, lerpAmount);
-				}
-				if(child.angle != nextChild.angle){
+				lerpAmount = (position - startTime)/(endTime - startTime);
+				spinDir = 0;
+							
+				for(i = 0, l = frame.refs.length; i < l; i++){
+					timeline = animation.timelineList[frame.refs[i].timeline];
+					key = timeline.keys[frame.refs[i].key];
+					child = key.child;
 					
-					//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)
-					angle1 = child.angle;
-					angle2 = nextChild.angle;
+					//Get child at next timeline position, if it can not be found, use the starting position
+					if(frame.refs[i].key >= timeline.keys.length - 1){
+						nextChild = timeline.keys[0].child;
+					} else {
+						nextChild = timeline.keys[frame.refs[i].key + 1].child;
+					}
 					
-					rangeValue = angle2 - angle1;
+					image = imagesByTimeline[timeline.id];
+					if(!image){
+						image = createImageByName(child.piece.name);
+						imagesByTimeline[timelineId] = image;
+					}
 					
-					if (rangeValue > 180) { rangeValue -= 360; }
-					else if (rangeValue < -180) { rangeValue += 360; }
+					//If this piece is set to be ignored, do not update any of it's position data
+					if(ignoredPieces[image.name]){ continue; }
 					
-					r = angle1 + rangeValue * lerpAmount;						
-					image.rotation = r * TO_RADS;
+					if(child.pixelPivotX != nextChild.pixelPivotX){
+						image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
+					}
+					if(child.pixelPivotY != nextChild.pixelPivotY){
+						image.pivotY = lerp(child.pixelPivotY, nextChild.pixelPivotY, lerpAmount);
+					}
+					if(child.x != nextChild.x){
+						image.x = lerp(child.x, nextChild.x, lerpAmount);
+					}
+					if(child.y != nextChild.y){
+						image.y = lerp(-child.y, -nextChild.y, lerpAmount);
+					}
+					if(child.scaleX != nextChild.scaleX){
+						image.scaleX = lerp(child.scaleX, nextChild.scaleX, lerpAmount);
+					}
+					if(child.scaleY != nextChild.scaleY){
+						image.scaleY = lerp(child.scaleY, nextChild.scaleY, lerpAmount);
+					}
+					if(child.angle != nextChild.angle){
+						
+						//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)
+						angle1 = child.angle;
+						angle2 = nextChild.angle;
+						
+						rangeValue = angle2 - angle1;
+						
+						if (rangeValue > 180) { rangeValue -= 360; }
+						else if (rangeValue < -180) { rangeValue += 360; }
+						
+						r = angle1 + rangeValue * lerpAmount;						
+						image.rotation = r * TO_RADS;
+					}
 				}
 			}
+			
 		}
 		
 		protected function updateCallbacks():void {

@@ -2,19 +2,14 @@ package
 {
 	import com.bit101.components.HUISlider;
 	
-	import flash.filesystem.File;
-	import flash.utils.getTimer;
 	import flash.utils.setTimeout;
 	
 	import starling.core.Starling;
 	import starling.display.Sprite;
-	import starling.events.Event;
 	import starling.textures.TextureAtlas;
 	
-	import treefortress.spriter.AnimationSet;
 	import treefortress.spriter.SpriterClip;
 	import treefortress.spriter.SpriterLoader;
-	import treefortress.starling.TextureLoader;
 	
 	public class ExampleCallback extends Sprite
 	{

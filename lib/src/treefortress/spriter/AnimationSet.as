@@ -54,7 +54,7 @@ package treefortress.spriter
 				anim.id = animData.@id;
 				anim.name = animData.@name;
 				anim.length = animData.@length;
-				anim.looping = (animData.@looping == undefined);
+				anim.looping = (animData.@looping == undefined || animData.@looping == true);
 				
 				//Add timelines
 				for each(var timelineData:XML in animData.timeline) {
@@ -123,8 +123,19 @@ package treefortress.spriter
 						ref.zIndex = refData.@z_index;
 						mainlineKey.refs.push(ref);
 					}
-					
 				}
+				
+				//A bit of a hack to support Animation Looping...
+				if(anim.looping && anim.length > mainlineKey.time){
+					//Automatically insert a new MainLineKey at the very end of the animation, 
+					var endKey:MainlineKey = new MainlineKey();
+					endKey.time = anim.length;
+					endKey.id = mainlineKey.id + 1;
+					//Use the references from the first frame to create the looping effect
+					endKey.refs = mainlineKeys[0].refs;
+					mainlineKeys.push(endKey);
+				}
+				
 				anim.mainline = new Mainline(mainlineKeys);
 				animationsByName[anim.name] = anim;
 				animationList.push(anim);

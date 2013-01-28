@@ -9,6 +9,10 @@ http://treefortress.com/introducing-spriteras-play-spriter-animations-scml-with-
 Or, you can check out some of the online code Example's:  
 https://github.com/treefortress/SpriterAS/tree/master/demo/src
 
+#Dependancies
+SpriterAS includes the following dependancies:
+* Starling Framework
+* Signals AS3
 
 #Basic Usage
 

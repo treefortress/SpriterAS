@@ -5,7 +5,6 @@ package
 	import starling.events.Touch;
 	import starling.events.TouchEvent;
 	import starling.events.TouchPhase;
-	import starling.textures.TextureAtlas;
 	
 	import treefortress.spriter.SpriterClip;
 	import treefortress.spriter.SpriterLoader;
@@ -40,6 +39,7 @@ package
 			orc.y = 10;
 			orc.x = 200;
 			addChild(orc);
+			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 
 			//The Starling Juggler is a simple way to do that.
 			Starling.juggler.add(orc);

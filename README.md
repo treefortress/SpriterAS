@@ -11,8 +11,8 @@ https://github.com/treefortress/SpriterAS/tree/master/demo/src
 
 #Dependancies
 SpriterAS includes the following dependancies:
-* Starling Framework
-* Signals AS3
+* Starling Framework (https://github.com/PrimaryFeather/Starling-Framework)
+* Signals AS3 (https://github.com/robertpenner/as3-signals)
 
 #Basic Usage
 

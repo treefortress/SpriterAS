@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="a4">
+<spriter_data scml_version="1.0" generator="BrashMonkey Spriter" generator_version="a4.1">
     <folder id="0">
         <file id="0" name="Brawler_flats_smallfoot.png" width="56" height="43"/>
         <file id="1" name="Brawler_flats_body.png" width="158" height="147"/>
@@ -1854,7 +1854,7 @@
                 </key>
             </timeline>
         </animation>
-        <animation id="8" name="idle2" length="800" >
+        <animation id="8" name="idle2" length="800">
             <mainline>
                 <key id="0">
                     <object_ref id="0" timeline="4" key="0" z_index="0"/>

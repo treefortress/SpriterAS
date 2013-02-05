@@ -73,6 +73,11 @@ package treefortress.spriter
 		protected var angle2:Number;
 		protected var rangeValue:Number;
 		// end tmp vars
+
+		private var nameHash:String;
+		private var tmpNameHash:String;
+
+		private var clearChildren:Boolean;
 		
 		public function SpriterClip(animations:AnimationSet, textureAtlas:TextureAtlas){
 			this.textureAtlas = textureAtlas;
@@ -151,29 +156,21 @@ package treefortress.spriter
 			
 			//Determine whether we need to advance a frame
 			var advanceFrame:Boolean = false;
-			
 			//Clip is just starting...
 			if(position == 0 || frameIndex == 0){ advanceFrame = true; }
-			
 			//Key frame has been passed
 			if(position > endTime){ 
 				advanceFrame = true; 
+				//Reached the end of the timeline, don't advance keyFrame
 				if(frameIndex == animation.mainline.keys.length - 2){
 					advanceFrame = false;
 				}
 			}
-			
-			//Animation has completed.
-			if(position > animation.length){ 
+			//Animation has completed, or Explicit override 
+			if(position > animation.length || forceNextFrame){ 
 				advanceFrame = true; 
 			}
-			
-			//Explicit override 
-			if(forceNextFrame){ advanceFrame = true; }
-			
-			//Next KeyFrame
 			if(advanceFrame){
-	
 				//Advance playhead
 				if(frameIndex < animation.mainline.keys.length - 2){
 					if(frameIndex == -1){ frameIndex = 0; }
@@ -217,7 +214,9 @@ package treefortress.spriter
 				}
 				
 				firstRun = container.numChildren == 0;
-				container.removeChildren();
+				//Optimization, check whether we need to remove any children?
+				optimizedRemoveChildren();
+				//container.removeChildren();
 				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timelineId = frame.refs[i].timeline;
@@ -229,7 +228,9 @@ package treefortress.spriter
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
 					}
-					container.addChild(image);
+					if(!image.parent){
+						container.addChild(image);
+					}
 					
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
@@ -315,6 +316,28 @@ package treefortress.spriter
 						image.rotation = r * TO_RADS;
 					}
 				}
+			}
+			
+		}
+		
+		protected function optimizedRemoveChildren():void {
+			clearChildren = true;
+			if(container.numChildren > 0){
+				tmpNameHash = "";
+				for(i = 0, l = frame.refs.length; i < l; i++){
+					timelineId = frame.refs[i].timeline;
+					image = imagesByTimeline[timelineId];
+					if(!image){ break; }
+					tmpNameHash += image.name;
+				}
+				if(tmpNameHash == nameHash && nameHash != ""){
+					clearChildren = false;
+				}
+				nameHash = tmpNameHash
+			}
+			if(clearChildren){
+				container.removeChildren();
+				//trace("CLEAR");
 			}
 			
 		}

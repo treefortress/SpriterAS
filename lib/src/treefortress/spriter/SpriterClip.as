@@ -233,7 +233,7 @@ package treefortress.spriter
 					//Timeline.keys = Vector.<TimelineKey>
 						
 					if(!child.piece){ continue; }
-					trace(child.piece.name);
+					//trace(child.piece.name);
 					image = imagesByName[child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);

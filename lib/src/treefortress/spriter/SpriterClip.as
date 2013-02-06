@@ -234,10 +234,10 @@ package treefortress.spriter
 						
 					if(!child.piece){ continue; }
 					//trace(child.piece.name);
-					image = imagesByName[child.piece.name];
+					image = imagesByTimeline[timelineId + "_" + child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						//imagesByTimeline[child.piece.name] = image;
+						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
 					}
 					container.addChild(image);
 					
@@ -283,9 +283,10 @@ package treefortress.spriter
 						nextChild = timeline.keys[frame.refs[i].key + 1].child;
 					}
 					
-					image = imagesByName[child.piece.name];
+					image = imagesByTimeline[timeline.id + "_" + child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);
+						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
 					}
 					
 					//If this piece is set to be ignored, do not update any of it's position data

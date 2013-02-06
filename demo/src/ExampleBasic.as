@@ -34,7 +34,7 @@ package
 			
 			//Add Orc 1
 			orc = spriterLoader.getSpriterClip("orc");
-			orc.play("run");
+			//orc.play("run");
 			orc.scaleX = -1;
 			orc.y = 10;
 			orc.x = 200;
@@ -42,12 +42,12 @@ package
 			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 
 			//The Starling Juggler is a simple way to do that.
-			Starling.juggler.add(orc);
+			//Starling.juggler.add(orc);
 			
 			//Add a "Brawler"
 			brawler = spriterLoader.getSpriterClip("brawler");
 			brawler.setPosition(500, 50);
-			brawler.play("idle");
+			brawler.play("headSwap");
 			addChild(brawler);
 			Starling.juggler.add(brawler);
 			

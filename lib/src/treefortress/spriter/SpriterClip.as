@@ -13,6 +13,7 @@ package treefortress.spriter
 	
 	import treefortress.spriter.core.Animation;
 	import treefortress.spriter.core.Child;
+	import treefortress.spriter.core.ChildReference;
 	import treefortress.spriter.core.MainlineKey;
 	import treefortress.spriter.core.Timeline;
 	import treefortress.spriter.core.TimelineKey;
@@ -139,6 +140,8 @@ package treefortress.spriter
 		public function update(elapsed:int = 0, forceNextFrame:Boolean = false):void {
 			if(!_isPlaying){ return; }; // Exit if we're not currently playing
 			
+			elapsed = 20;
+			
 			position += elapsed * playbackSpeed;
 			updateCallbacks();
 			
@@ -153,7 +156,7 @@ package treefortress.spriter
 			var advanceFrame:Boolean = false;
 			
 			//Clip is just starting...
-			if(position == 0 || frameIndex == 0){ advanceFrame = true; }
+			if(position == 0 || frameIndex == -1){ advanceFrame = true; }
 			
 			//Key frame has been passed
 			if(position > endTime){ 
@@ -222,12 +225,19 @@ package treefortress.spriter
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timelineId = frame.refs[i].timeline;
 					child = animation.timelineList[timelineId].keys[frame.refs[i].key].child;
-					if(!child.piece){ continue; }
+					//var timeline:Timeline = animation.timelineList[timelineId];
+					//var keys:Vector.<TimelineKey> =  timeline.keys;
+					//var childRef:ChildReference = frame.refs[i];
 					
-					image = imagesByTimeline[timelineId];
+					//Frame.refs == Vector.<ChildReference>
+					//Timeline.keys = Vector.<TimelineKey>
+						
+					if(!child.piece){ continue; }
+					trace(child.piece.name);
+					image = imagesByName[child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId] = image;
+						//imagesByTimeline[child.piece.name] = image;
 					}
 					container.addChild(image);
 					
@@ -273,10 +283,9 @@ package treefortress.spriter
 						nextChild = timeline.keys[frame.refs[i].key + 1].child;
 					}
 					
-					image = imagesByTimeline[timeline.id];
+					image = imagesByName[child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId] = image;
 					}
 					
 					//If this piece is set to be ignored, do not update any of it's position data

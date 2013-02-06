@@ -45,7 +45,7 @@ package
 			//currentExample = ExampleDragAndDrop;
 			
 			//Map external display objects to specific body-parts
-			//currentExample = ExampleMagicHands;
+			currentExample = ExampleMagicHands;
 			
 			//Advanced loading techniques
 			//currentExample = ExampleLoading;

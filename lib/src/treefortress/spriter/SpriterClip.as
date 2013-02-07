@@ -140,8 +140,6 @@ package treefortress.spriter
 		public function update(elapsed:int = 0, forceNextFrame:Boolean = false):void {
 			if(!_isPlaying){ return; }; // Exit if we're not currently playing
 			
-			elapsed = 20;
-			
 			position += elapsed * playbackSpeed;
 			updateCallbacks();
 			

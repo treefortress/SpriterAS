@@ -13,7 +13,6 @@ package treefortress.spriter
 	
 	import treefortress.spriter.core.Animation;
 	import treefortress.spriter.core.Child;
-	import treefortress.spriter.core.ChildReference;
 	import treefortress.spriter.core.MainlineKey;
 	import treefortress.spriter.core.Timeline;
 	import treefortress.spriter.core.TimelineKey;
@@ -29,13 +28,15 @@ package treefortress.spriter
 		protected var frame:MainlineKey;
 		protected var nextFrame:MainlineKey;
 		
-		protected var callbackList:Array;
+		protected var callbackList:Vector.<Callback>;
 		protected var swapHash:Object;
 		protected var imagesByTimeline:Object;
 		protected var imagesByName:Object;
 		protected var texturesByName:Object;
 		
 		protected var _isPlaying:Boolean;
+		protected var currentColor:Number;
+		
 		
 		// Public
 		public var textureAtlas:TextureAtlas;
@@ -73,12 +74,16 @@ package treefortress.spriter
 		protected var angle1:Number;
 		protected var angle2:Number;
 		protected var rangeValue:Number;
-		// end tmp vars
+		protected var nameHash:String;
+		protected var tmpNameHash:String;
+		protected var clearChildren:Boolean;
+		protected var advanceFrame:Boolean;
+		// end tmp vars		
 		
 		public function SpriterClip(animations:AnimationSet, textureAtlas:TextureAtlas){
 			this.textureAtlas = textureAtlas;
 			this.animations = animations;
-			callbackList = [];
+			callbackList = new <Callback>[];
 			swapHash = {};
 			imagesByTimeline = {};
 			texturesByName = {};
@@ -98,10 +103,10 @@ package treefortress.spriter
 		}
 		
 		public function addCallback(callback:Function, time:int, addOnce:Boolean = true):void {
-			callbackList.push({call: callback, time: time, addOnce: addOnce});
+			if(time > animation.length){ time = animation.length; }
+			callbackList.push(new Callback(callback, Math.min(time, animation.length), addOnce));
 		}
-			
-			
+		
 		public function get isPlaying():Boolean { return _isPlaying; }
 		
 		public function setPosition(x:int, y:int):void {
@@ -117,6 +122,7 @@ package treefortress.spriter
 			animation = animations.getByName(name);
 			position = startPosition;
 			
+			//Empty the callback list
 			if(clearCallbacks){
 				callbackList.length = 0;
 			}
@@ -132,10 +138,15 @@ package treefortress.spriter
 			
 		}
 		
+		public function stop():void {
+			_isPlaying = false;
+			
+		}
+		
+		/** Hook for Starling Juggler Interface **/
 		public function advanceTime(time:Number):void {
 			update(time * 1000);
 		}
-		
 		
 		public function update(elapsed:int = 0, forceNextFrame:Boolean = false):void {
 			if(!_isPlaying){ return; }; // Exit if we're not currently playing
@@ -151,30 +162,22 @@ package treefortress.spriter
 			lastTime = getTimer();
 			
 			//Determine whether we need to advance a frame
-			var advanceFrame:Boolean = false;
-			
+			advanceFrame = false;
 			//Clip is just starting...
 			if(position == 0 || frameIndex == -1){ advanceFrame = true; }
-			
 			//Key frame has been passed
 			if(position > endTime){ 
 				advanceFrame = true; 
+				//Reached the end of the timeline, don't advance keyFrame
 				if(frameIndex == animation.mainline.keys.length - 2){
 					advanceFrame = false;
 				}
 			}
-			
-			//Animation has completed.
-			if(position > animation.length){ 
+			//Animation has completed, or Explicit override 
+			if(position > animation.length || forceNextFrame){ 
 				advanceFrame = true; 
 			}
-			
-			//Explicit override 
-			if(forceNextFrame){ advanceFrame = true; }
-			
-			//Next KeyFrame
 			if(advanceFrame){
-	
 				//Advance playhead
 				if(frameIndex < animation.mainline.keys.length - 2){
 					if(frameIndex == -1){ frameIndex = 0; }
@@ -195,15 +198,17 @@ package treefortress.spriter
 					position = 0; 
 					animationComplete.dispatch(this);
 					
+					//Reset all callbacks, TODO: Check if any callbacks on this final frame?
 					for(i = callbackList.length - 1; i >= 0; i--){
 						callbackList[i].called = false;
 					}
 					
-					if(animation.looping == false){
-						_isPlaying = false;
-						return;//Exit Animation!
-					} else {
+					//Loop or stop pakying...
+					if(animation.looping){
 						frameIndex = 0;
+					} else {
+						_isPlaying = false;
+						return;
 					}
 				}
 				
@@ -218,26 +223,23 @@ package treefortress.spriter
 				}
 				
 				firstRun = container.numChildren == 0;
-				container.removeChildren();
+				//Optimization, check whether we need to remove any children?
+				optimizedRemoveChildren();
+				//container.removeChildren();
 				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timelineId = frame.refs[i].timeline;
 					child = animation.timelineList[timelineId].keys[frame.refs[i].key].child;
-					//var timeline:Timeline = animation.timelineList[timelineId];
-					//var keys:Vector.<TimelineKey> =  timeline.keys;
-					//var childRef:ChildReference = frame.refs[i];
-					
-					//Frame.refs == Vector.<ChildReference>
-					//Timeline.keys = Vector.<TimelineKey>
-						
 					if(!child.piece){ continue; }
-					//trace(child.piece.name);
-					image = imagesByTimeline[timelineId + "_" + child.piece.name];
+					
+					image = imagesByTimeline[timelineId];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
+						imagesByTimeline[timelineId] = image;
 					}
-					container.addChild(image);
+					if(!image.parent){
+						container.addChild(image);
+					}
 					
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
@@ -263,12 +265,12 @@ package treefortress.spriter
 				}
 			}
 			
-		//Small, Incremental interpolated update
- 			if(position < endTime){
+			//Small, Incremental interpolated update
+			if(position < endTime){
 				
 				lerpAmount = (position - startTime)/(endTime - startTime);
 				spinDir = 0;
-							
+				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timeline = animation.timelineList[frame.refs[i].timeline];
 					key = timeline.keys[frame.refs[i].key];
@@ -281,10 +283,10 @@ package treefortress.spriter
 						nextChild = timeline.keys[frame.refs[i].key + 1].child;
 					}
 					
-					image = imagesByTimeline[timeline.id + "_" + child.piece.name];
+					image = imagesByTimeline[timeline.id];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
+						imagesByTimeline[timelineId] = image;
 					}
 					
 					//If this piece is set to be ignored, do not update any of it's position data
@@ -327,6 +329,26 @@ package treefortress.spriter
 			
 		}
 		
+		protected function optimizedRemoveChildren():void {
+			clearChildren = true;
+			if(container.numChildren > 0){
+				tmpNameHash = "";
+				for(i = 0, l = frame.refs.length; i < l; i++){
+					timelineId = frame.refs[i].timeline;
+					image = imagesByTimeline[timelineId];
+					if(!image){ break; }
+					tmpNameHash += image.name;
+				}
+				if(tmpNameHash == nameHash && nameHash != ""){
+					clearChildren = false;
+				}
+				nameHash = tmpNameHash
+			}
+			
+			if(clearChildren){ container.removeChildren(); } 
+			
+		}
+		
 		protected function updateCallbacks():void {
 			for(var i:int = callbackList.length - 1; i >= 0; i--){
 				if(callbackList[i].time <= position && callbackList[i].called != true){
@@ -360,8 +382,19 @@ package treefortress.spriter
 			
 			var image:Image = new Image(texture);
 			image.name = name;
+			if(!isNaN(currentColor)){
+				image.color = currentColor;
+			}
 			imagesByName[name] = image;
+			
 			return image;
+		}
+		
+		public function setColor(value:Number):void {
+			for(var name:String in imagesByName){
+				imagesByName[name].color = value;
+			}
+			currentColor = value;
 		}
 		
 		public function getTexture(name:String):Texture {
@@ -439,10 +472,19 @@ package treefortress.spriter
 				image.texture = getTexture(animation.timelineList[o].keys[0].child.piece.name);
 			}
 		}
-		
-		public function stop():void {
-			_isPlaying = false;
-			
-		}
 	}
+}
+
+class Callback {
+	
+	public var call:Function;
+	public var time:int;
+	public var addOnce:Boolean;
+	
+	public function Callback(call:Function, time:int, addOnce:Boolean = false):void {
+		this.call = call;
+		this.time = time;
+		this.addOnce = addOnce;
+	}
+	
 }

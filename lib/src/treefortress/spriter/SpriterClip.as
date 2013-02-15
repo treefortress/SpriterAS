@@ -23,8 +23,6 @@ package treefortress.spriter
 		protected static var TO_RADS:Number = Math.PI/180;
 		
 		// Protected
-		protected var textureAtlas:TextureAtlas;
-		protected var animations:AnimationSet;
 		protected var container:Sprite;
 		
 		protected var frameIndex:int = 0;
@@ -40,6 +38,8 @@ package treefortress.spriter
 		protected var _isPlaying:Boolean;
 		
 		// Public
+		public var textureAtlas:TextureAtlas;
+		public var animations:AnimationSet;
 		public var animation:Animation;
 		public var animationComplete:Signal;
 		public var playbackSpeed:Number = 1;

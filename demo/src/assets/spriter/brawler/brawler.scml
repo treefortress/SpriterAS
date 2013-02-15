@@ -66,13 +66,13 @@
                     <object folder="0" file="2" x="158.26087" y="-158.26087" pivot_x="0.431677" pivot_y="0.25528"/>
                 </key>
                 <key id="1" time="200" spin="0">
-                    <object folder="0" file="2" x="159" y="-148.695652" pivot_x="0.431677" pivot_y="0.25528"/>
+                    <object folder="0" file="6" x="159" y="-148.695652" pivot_x="0.431677" pivot_y="0.25528"/>
                 </key>
                 <key id="2" time="320" spin="0">
-                    <object folder="0" file="2" x="159" y="-145.695652" pivot_x="0.431677" pivot_y="0.25528"/>
+                    <object folder="0" file="6" x="159" y="-145.695652" pivot_x="0.431677" pivot_y="0.25528"/>
                 </key>
                 <key id="3" time="520" spin="0">
-                    <object folder="0" file="2" x="158.692029" y="-160.097826" pivot_x="0.431677" pivot_y="0.25528"/>
+                    <object folder="0" file="6" x="158.692029" y="-160.097826" pivot_x="0.431677" pivot_y="0.25528"/>
                 </key>
                 <key id="4" time="639" spin="0">
                     <object folder="0" file="2" x="158.487228" y="-162.225272" pivot_x="0.431677" pivot_y="0.25528"/>
@@ -1971,6 +1971,36 @@
                 </key>
                 <key id="3" time="358" spin="0">
                     <object folder="0" file="5" x="233.913043" y="-290.434783" pivot_x="0.748721" pivot_y="0.904653"/>
+                </key>
+            </timeline>
+        </animation>
+        <animation id="9" name="headSwap" length="1000">
+            <mainline>
+                <key id="0">
+                    <object_ref id="0" timeline="0" key="0" z_index="0"/>
+                </key>
+                <key id="1" time="236">
+                    <object_ref id="0" timeline="0" key="1" z_index="0"/>
+                </key>
+                <key id="2" time="761">
+                    <object_ref id="0" timeline="0" key="2" z_index="0"/>
+                </key>
+                <key id="3" time="1000">
+                    <object_ref id="0" timeline="0" key="3" z_index="0"/>
+                </key>
+            </mainline>
+            <timeline id="0">
+                <key id="0" spin="0">
+                    <object folder="0" file="2" x="-57" y="74"/>
+                </key>
+                <key id="1" time="236" spin="0">
+                    <object folder="0" file="6" x="-85" y="99" scale_x="1.333333" scale_y="1.333333"/>
+                </key>
+                <key id="2" time="761" spin="0">
+                    <object folder="0" file="2" x="-84.853403" y="98.86911" scale_x="1.331588" scale_y="1.331588"/>
+                </key>
+                <key id="3" time="1000" spin="0">
+                    <object folder="0" file="2" x="-57" y="74"/>
                 </key>
             </timeline>
         </animation>

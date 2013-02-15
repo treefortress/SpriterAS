@@ -47,6 +47,11 @@ SpriterAS includes the following dependancies:
 		brawler.unswapPiece("eyes_open");
 	}, 50)
 
+###Tint entire sprite
+
+	//Flash Red
+	brawler.setColor(0xFF0000);
+
 ###Isolate Body Parts and control externally
 
 	//Decapitation!

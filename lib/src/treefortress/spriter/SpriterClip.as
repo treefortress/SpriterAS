@@ -30,13 +30,15 @@ package treefortress.spriter
 		protected var frame:MainlineKey;
 		protected var nextFrame:MainlineKey;
 		
-		protected var callbackList:Array;
+		protected var callbackList:Vector.<Callback>;
 		protected var swapHash:Object;
 		protected var imagesByTimeline:Object;
 		protected var imagesByName:Object;
 		protected var texturesByName:Object;
 		
 		protected var _isPlaying:Boolean;
+		protected var currentColor:Number;
+		
 		
 		// Public
 		public var animation:Animation;
@@ -72,17 +74,16 @@ package treefortress.spriter
 		protected var angle1:Number;
 		protected var angle2:Number;
 		protected var rangeValue:Number;
-		// end tmp vars
-
-		private var nameHash:String;
-		private var tmpNameHash:String;
-
-		private var clearChildren:Boolean;
+		protected var nameHash:String;
+		protected var tmpNameHash:String;
+		protected var clearChildren:Boolean;
+		protected var advanceFrame:Boolean;
+		// end tmp vars		
 		
 		public function SpriterClip(animations:AnimationSet, textureAtlas:TextureAtlas){
 			this.textureAtlas = textureAtlas;
 			this.animations = animations;
-			callbackList = [];
+			callbackList = new <Callback>[];
 			swapHash = {};
 			imagesByTimeline = {};
 			texturesByName = {};
@@ -102,10 +103,10 @@ package treefortress.spriter
 		}
 		
 		public function addCallback(callback:Function, time:int, addOnce:Boolean = true):void {
-			callbackList.push({call: callback, time: time, addOnce: addOnce});
+			if(time > animation.length){ time = animation.length; }
+			callbackList.push(new Callback(callback, Math.min(time, animation.length), addOnce));
 		}
-			
-			
+		
 		public function get isPlaying():Boolean { return _isPlaying; }
 		
 		public function setPosition(x:int, y:int):void {
@@ -121,6 +122,7 @@ package treefortress.spriter
 			animation = animations.getByName(name);
 			position = startPosition;
 			
+			//Empty the callback list
 			if(clearCallbacks){
 				callbackList.length = 0;
 			}
@@ -136,10 +138,15 @@ package treefortress.spriter
 			
 		}
 		
+		public function stop():void {
+			_isPlaying = false;
+			
+		}
+		
+		/** Hook for Starling Juggler Interface **/
 		public function advanceTime(time:Number):void {
 			update(time * 1000);
 		}
-		
 		
 		public function update(elapsed:int = 0, forceNextFrame:Boolean = false):void {
 			if(!_isPlaying){ return; }; // Exit if we're not currently playing
@@ -155,9 +162,9 @@ package treefortress.spriter
 			lastTime = getTimer();
 			
 			//Determine whether we need to advance a frame
-			var advanceFrame:Boolean = false;
+			advanceFrame = false;
 			//Clip is just starting...
-			if(position == 0 || frameIndex == 0){ advanceFrame = true; }
+			if(position == 0 || frameIndex == -1){ advanceFrame = true; }
 			//Key frame has been passed
 			if(position > endTime){ 
 				advanceFrame = true; 
@@ -191,15 +198,17 @@ package treefortress.spriter
 					position = 0; 
 					animationComplete.dispatch(this);
 					
+					//Reset all callbacks, TODO: Check if any callbacks on this final frame?
 					for(i = callbackList.length - 1; i >= 0; i--){
 						callbackList[i].called = false;
 					}
 					
-					if(animation.looping == false){
-						_isPlaying = false;
-						return;//Exit Animation!
-					} else {
+					//Loop or stop pakying...
+					if(animation.looping){
 						frameIndex = 0;
+					} else {
+						_isPlaying = false;
+						return;
 					}
 				}
 				
@@ -256,12 +265,12 @@ package treefortress.spriter
 				}
 			}
 			
-		//Small, Incremental interpolated update
- 			if(position < endTime){
+			//Small, Incremental interpolated update
+			if(position < endTime){
 				
 				lerpAmount = (position - startTime)/(endTime - startTime);
 				spinDir = 0;
-							
+				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timeline = animation.timelineList[frame.refs[i].timeline];
 					key = timeline.keys[frame.refs[i].key];
@@ -335,10 +344,8 @@ package treefortress.spriter
 				}
 				nameHash = tmpNameHash
 			}
-			if(clearChildren){
-				container.removeChildren();
-				//trace("CLEAR");
-			}
+			
+			if(clearChildren){ container.removeChildren(); } 
 			
 		}
 		
@@ -375,8 +382,19 @@ package treefortress.spriter
 			
 			var image:Image = new Image(texture);
 			image.name = name;
+			if(!isNaN(currentColor)){
+				image.color = currentColor;
+			}
 			imagesByName[name] = image;
+			
 			return image;
+		}
+		
+		public function setColor(value:Number):void {
+			for(var name:String in imagesByName){
+				imagesByName[name].color = value;
+			}
+			currentColor = value;
 		}
 		
 		public function getTexture(name:String):Texture {
@@ -454,10 +472,19 @@ package treefortress.spriter
 				image.texture = getTexture(animation.timelineList[o].keys[0].child.piece.name);
 			}
 		}
-		
-		public function stop():void {
-			_isPlaying = false;
-			
-		}
 	}
+}
+
+class Callback {
+	
+	public var call:Function;
+	public var time:int;
+	public var addOnce:Boolean;
+	
+	public function Callback(call:Function, time:int, addOnce:Boolean = false):void {
+		this.call = call;
+		this.time = time;
+		this.addOnce = addOnce;
+	}
+	
 }

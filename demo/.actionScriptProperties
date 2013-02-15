@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <actionScriptProperties analytics="false" mainApplicationPath="SpriterAS_Demo.as" projectUUID="91c50ff5-b072-4c69-9f1a-c39a91ed0685" version="11">
-  <compiler additionalCompilerArguments="-locale en_US -use-network=false" advancedTelemetry="true" autoRSLOrdering="true" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="false" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="true" useDebugRSLSwfs="true" useFlashSDK="true" verifyDigests="true" warn="true">
+  <compiler additionalCompilerArguments="-locale en_US -use-network=false -inline -swf-version=17" advancedTelemetry="true" autoRSLOrdering="true" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="false" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="true" useDebugRSLSwfs="true" useFlashSDK="true" verifyDigests="true" warn="true">
     <compilerSourcePath>
       <compilerSourcePathEntry kind="1" linkType="1" path="D:/_Development/TreeFortress Games/SpriterAS/lib/src"/>
     </compilerSourcePath>
@@ -9,14 +9,14 @@
         <excludedEntries>
           <libraryPathEntry kind="1" linkType="1" path="${PROJECT_FRAMEWORKS}/locale/{locale}"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/advancedgrids.swc" useDefaultLinkType="false"/>
-          <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/automation_air.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/charts.swc" useDefaultLinkType="false"/>
+          <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/automation_air.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/netmon.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/spark.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/sparkskins.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/rpc.swc" useDefaultLinkType="false"/>
-          <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/qtp_air.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/videoPlayer.swc" useDefaultLinkType="false"/>
+          <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/qtp_air.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/flash-integration.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/authoringsupport.swc" useDefaultLinkType="false"/>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/qtp.swc" useDefaultLinkType="false"/>

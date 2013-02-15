@@ -22,6 +22,9 @@ package
 		
 		protected var prevT:Number;
 		
+		protected var ticks:int = 0;
+		protected var interval:int = 5;
+		
 		public function Benchmark(){
 			
 			SpriterAS_Demo.setText("", "");
@@ -33,28 +36,35 @@ package
 			//Use the SpriterLoader class to load individual SCML files, generate a TextureAtlas, and create AnimationSets, all at once.
 			spriterLoader = new SpriterLoader();
 			spriterLoader.completed.addOnce(onSpriterLoaderComplete);
-			spriterLoader.load(["assets/spriter/brawler/brawler.scml", "assets/spriter/orc/orc.scml"], textureScale);
+			spriterLoader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/brawler/brawler.scml"], textureScale);
 			
 			
 		}
 		
 		protected function onSpriterLoaderComplete(loader:SpriterLoader):void {
 			addEventListener(Event.ENTER_FRAME, function(){
-				var deltaT:Number = getTimer() - prevT;
-				prevT = getTimer();
-				
-				var stage:Stage = SpriterAS_Demo._stage;
-				
-				if(deltaT < 18 && Math.random() < .5){
-					brawler = spriterLoader.getSpriterClip("brawler");
-					brawler.setPosition(
-						Math.random() * (stage.stageWidth - 200), 
-						Math.random() * (stage.stageHeight - 200));
-					brawler.play("idle");
-					addChild(brawler);
-					Starling.juggler.add(brawler);
-					SpriterAS_Demo.setText(numChildren + "", "");
+				ticks++;
+				//if(numChildren > 0){ return; }
+				if(ticks % interval == 0){
+					var deltaT:Number = (getTimer() - prevT)/interval;
+					prevT = getTimer();
+					
+					var stage:Stage = SpriterAS_Demo._stage;
+					
+					if(deltaT < 17){
+						for(var i:int = 0; i < 5; i++){
+							brawler = spriterLoader.getSpriterClip("brawler");
+							brawler.setPosition(
+								Math.random() * (stage.stageWidth - 200), 
+								Math.random() * (stage.stageHeight - 200));
+							brawler.play("idle");
+							addChild(brawler);
+							Starling.juggler.add(brawler);
+						}
+					}
+					SpriterAS_Demo.setText(numChildren + "", deltaT + "");
 				}
+				
 				
 			});
 		}

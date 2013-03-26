@@ -53,13 +53,6 @@ package starling.text
      */ 
     public class BitmapFont
     {
-        // embed minimal font
-        [Embed(source="../../assets/mini.fnt", mimeType="application/octet-stream")]
-        private static var MiniXml:Class;
-        
-        [Embed(source = "../../assets/mini.png")]
-        private static var MiniTexture:Class;
-        
         /** Use this constant for the <code>fontSize</code> property of the TextField class to 
          *  render the bitmap font in exactly the size it was created. */ 
         public static const NATIVE_SIZE:int = -1;
@@ -88,8 +81,8 @@ package starling.text
             // if no texture is passed in, we create the minimal, embedded font
             if (texture == null && fontXml == null)
             {
-                texture = Texture.fromBitmap(new MiniTexture());
-                fontXml = XML(new MiniXml());
+                texture = MiniBitmapFont.texture;
+                fontXml = MiniBitmapFont.xml;
             }
             
             mName = "unknown";
@@ -357,9 +350,10 @@ package starling.text
                 
                 if (numChars == 0) continue;
                 
-                var lastLocation:CharLocation = line[line.length-1];
-                var right:Number = lastLocation.x + lastLocation.char.width;
                 var xOffset:int = 0;
+                var lastLocation:CharLocation = line[line.length-1];
+                var right:Number = lastLocation.x - lastLocation.char.xOffset 
+                                                  + lastLocation.char.xAdvance;
                 
                 if (hAlign == HAlign.RIGHT)       xOffset =  containerWidth - right;
                 else if (hAlign == HAlign.CENTER) xOffset = (containerWidth - right) / 2;

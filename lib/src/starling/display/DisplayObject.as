@@ -21,7 +21,6 @@ package starling.display
     import starling.core.RenderSupport;
     import starling.errors.AbstractClassError;
     import starling.errors.AbstractMethodError;
-    import starling.events.Event;
     import starling.events.EventDispatcher;
     import starling.events.TouchEvent;
     import starling.filters.FragmentFilter;
@@ -127,7 +126,6 @@ package starling.display
         private var mBlendMode:String;
         private var mName:String;
         private var mUseHandCursor:Boolean;
-        private var mLastTouchTimestamp:Number;
         private var mParent:DisplayObjectContainer;  
         private var mTransformationMatrix:Matrix;
         private var mOrientationChanged:Boolean;
@@ -150,7 +148,6 @@ package starling.display
             mX = mY = mPivotX = mPivotY = mRotation = mSkewX = mSkewY = 0.0;
             mScaleX = mScaleY = mAlpha = 1.0;            
             mVisible = mTouchable = true;
-            mLastTouchTimestamp = -1;
             mBlendMode = BlendMode.AUTO;
             mTransformationMatrix = new Matrix();
             mOrientationChanged = mUseHandCursor = false;
@@ -312,22 +309,6 @@ package starling.display
         {
             throw new AbstractMethodError("Method needs to be implemented in subclass");
         }
-		
-        
-        /** @inheritDoc */
-        public override function dispatchEvent(event:Event):void
-        {
-            // on one given moment, there is only one set of touches -- thus, 
-            // we process only one touch event with a certain timestamp per frame
-            if (event is TouchEvent)
-            {
-                var touchEvent:TouchEvent = event as TouchEvent;
-                if (touchEvent.timestamp == mLastTouchTimestamp) return;
-                else mLastTouchTimestamp = touchEvent.timestamp;
-            }
-            
-            super.dispatchEvent(event);
-        }
         
         /** Indicates if an object occupies any visible area. (Which is the case when its 'alpha', 
          *  'scaleX' and 'scaleY' values are not zero, and its 'visible' property is enabled.) */
@@ -355,7 +336,12 @@ package starling.display
         
         // helpers
         
-        private function normalizeAngle(angle:Number):Number
+        private final function isEquivalent(a:Number, b:Number, epsilon:Number=0.0001):Boolean
+        {
+            return (a - epsilon < b) && (a + epsilon > b);
+        }
+        
+        private final function normalizeAngle(angle:Number):Number
         {
             // move into range [-180 deg, +180 deg]
             while (angle < -Math.PI) angle += Math.PI * 2.0;
@@ -366,28 +352,59 @@ package starling.display
         // properties
  
         /** The transformation matrix of the object relative to its parent.
-         *  If you assign a custom transformation matrix, Starling will figure out suitable values  
-         *  for the corresponding orienation properties (<code>x, y, scaleX/Y, rotation</code> etc).
-         *  CAUTION: returns not a copy, but the actual object! */
+         * 
+         *  <p>If you assign a custom transformation matrix, Starling will try to figure out  
+         *  suitable values for <code>x, y, scaleX, scaleY,</code> and <code>rotation</code>.
+         *  However, if the matrix was created in a different way, this might not be possible. 
+         *  In that case, Starling will apply the matrix, but not update the corresponding 
+         *  properties.</p>
+         * 
+         *  @returns CAUTION: not a copy, but the actual object! */
         public function get transformationMatrix():Matrix
         {
             if (mOrientationChanged)
             {
                 mOrientationChanged = false;
-                mTransformationMatrix.identity();
                 
-                if (mSkewX  != 0.0 || mSkewY  != 0.0) MatrixUtil.skew(mTransformationMatrix, mSkewX, mSkewY);
-                if (mScaleX != 1.0 || mScaleY != 1.0) mTransformationMatrix.scale(mScaleX, mScaleY);
-                if (mRotation != 0.0)                 mTransformationMatrix.rotate(mRotation);
-                if (mX != 0.0 || mY != 0.0)           mTransformationMatrix.translate(mX, mY);
-                
-                if (mPivotX != 0.0 || mPivotY != 0.0)
+                if (mSkewX == 0.0 && mSkewY == 0.0)
                 {
-                    // prepend pivot transformation
-                    mTransformationMatrix.tx = mX - mTransformationMatrix.a * mPivotX
-                                                  - mTransformationMatrix.c * mPivotY;
-                    mTransformationMatrix.ty = mY - mTransformationMatrix.b * mPivotX 
-                                                  - mTransformationMatrix.d * mPivotY;
+                    // optimization: no skewing / rotation simplifies the matrix math
+                    
+                    if (mRotation == 0.0)
+                    {
+                        mTransformationMatrix.setTo(mScaleX, 0.0, 0.0, mScaleY, 
+                            mX - mPivotX * mScaleX, mY - mPivotY * mScaleY);
+                    }
+                    else
+                    {
+                        var cos:Number = Math.cos(mRotation);
+                        var sin:Number = Math.sin(mRotation);
+                        var a:Number   = mScaleX *  cos;
+                        var b:Number   = mScaleX *  sin;
+                        var c:Number   = mScaleY * -sin;
+                        var d:Number   = mScaleY *  cos;
+                        var tx:Number  = mX - mPivotX * a - mPivotY * c;
+                        var ty:Number  = mY - mPivotX * b - mPivotY * d;
+                        
+                        mTransformationMatrix.setTo(a, b, c, d, tx, ty);
+                    }
+                }
+                else
+                {
+                    mTransformationMatrix.identity();
+                    mTransformationMatrix.scale(mScaleX, mScaleY);
+                    MatrixUtil.skew(mTransformationMatrix, mSkewX, mSkewY);
+                    mTransformationMatrix.rotate(mRotation);
+                    mTransformationMatrix.translate(mX, mY);
+                    
+                    if (mPivotX != 0.0 || mPivotY != 0.0)
+                    {
+                        // prepend pivot transformation
+                        mTransformationMatrix.tx = mX - mTransformationMatrix.a * mPivotX
+                                                      - mTransformationMatrix.c * mPivotY;
+                        mTransformationMatrix.ty = mY - mTransformationMatrix.b * mPivotX 
+                                                      - mTransformationMatrix.d * mPivotY;
+                    }
                 }
             }
             
@@ -398,33 +415,37 @@ package starling.display
         {
             mOrientationChanged = false;
             mTransformationMatrix.copyFrom(matrix);
+
             mX = matrix.tx;
             mY = matrix.ty;
             
-            var a:Number = matrix.a;
-            var b:Number = matrix.b;
-            var c:Number = matrix.c;
-            var d:Number = matrix.d;
+            mScaleX = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+            mSkewY  = Math.acos(matrix.a / mScaleX);
             
-            mScaleX = Math.sqrt(a * a + b * b);
-            if (mScaleX != 0) mRotation = Math.atan2(b, a);
-            else              mRotation = 0; // Rotation is not defined when a = b = 0
+            if (!isEquivalent(matrix.b, mScaleX * Math.sin(mSkewY)))
+            {
+                mScaleX *= -1;
+                mSkewY = Math.acos(matrix.a / mScaleX);
+            }
             
-            var cosTheta:Number = Math.cos(mRotation);
-            var sinTheta:Number = Math.sin(mRotation);
+            mScaleY = Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d);
+            mSkewX  = Math.acos(matrix.d / mScaleY);
             
-            mScaleY = d * cosTheta - c * sinTheta;
-            if (mScaleY != 0) mSkewX = Math.atan2(d * sinTheta + c * cosTheta, mScaleY);
-            else              mSkewX = 0; // skewX is not defined when scaleY = 0
+            if (!isEquivalent(matrix.c, -mScaleY * Math.sin(mSkewX)))
+            {
+                mScaleY *= -1;
+                mSkewX = Math.acos(matrix.d / mScaleY);
+            }
             
-            // A 2-D affine transform has only 6 degrees of freedom -- two for translation,
-            // two for scale, one for rotation and one for skew. We are using 2 parameters for skew.
-            // To calculate the parameters from matrix values, one skew can be set to any arbitrary 
-            // value. Setting it to 0 makes the math simpler.
-            
-            mSkewY  = 0;
-            mPivotX = 0;
-            mPivotY = 0;
+            if (isEquivalent(mSkewX, mSkewY))
+            {
+                mRotation = mSkewX;
+                mSkewX = mSkewY = 0;
+            }
+            else
+            {
+                mRotation = 0;
+            }
         }
         
         /** Indicates if the mouse cursor should transform into a hand while it's over the sprite. 
@@ -605,7 +626,7 @@ package starling.display
         public function get name():String { return mName; }
         public function set name(value:String):void { mName = value; }
         
-        /** The filter or filter group that is attached to the display object. The starling.filters 
+        /** The filter that is attached to the display object. The starling.filters 
          *  package contains several classes that define specific filters you can use. 
          *  Beware that you should NOT use the same filter on more than one object (for 
          *  performance reasons). */ 

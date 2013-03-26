@@ -49,10 +49,10 @@ package starling.extensions
         protected var mIndices:Vector.<uint>;
         protected var mIndexBuffer:IndexBuffer3D;
         
-        protected var mNumParticles:int;
+        public var mNumParticles:int;
         protected var mMaxCapacity:int;
         protected var mEmissionRate:Number; // emitted particles per second
-        protected var mEmissionTime:Number;
+        public var mEmissionTime:Number;
         
         /** Helper objects. */
         protected static var sHelperMatrix:Matrix = new Matrix();
@@ -275,7 +275,7 @@ package starling.extensions
                 
                 if (mEmissionTime != Number.MAX_VALUE)
                     mEmissionTime = Math.max(0.0, mEmissionTime - passedTime);
-            }
+            } 
             
             // update vertex data
             

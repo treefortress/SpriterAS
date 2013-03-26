@@ -36,6 +36,7 @@ package
 			//Use the SpriterLoader class to load individual SCML files, generate a TextureAtlas, and create AnimationSets, all at once.
 			spriterLoader = new SpriterLoader();
 			spriterLoader.completed.addOnce(onSpriterLoaderComplete);
+			
 			spriterLoader.load(["http://treefortress.com/examples/SpriterAS/assets/spriter/brawler/brawler.scml"], textureScale);
 			
 			
@@ -45,13 +46,14 @@ package
 			addEventListener(Event.ENTER_FRAME, function(){
 				ticks++;
 				//if(numChildren > 0){ return; }
+				
 				if(ticks % interval == 0){
 					var deltaT:Number = (getTimer() - prevT)/interval;
 					prevT = getTimer();
 					
 					var stage:Stage = SpriterAS_Demo._stage;
 					
-					if(deltaT < 17){
+					if(deltaT < 18){
 						for(var i:int = 0; i < 5; i++){
 							brawler = spriterLoader.getSpriterClip("brawler");
 							brawler.setPosition(
@@ -59,6 +61,7 @@ package
 								Math.random() * (stage.stageHeight - 200));
 							brawler.play("idle");
 							addChild(brawler);
+							//brawler.visible = false;
 							Starling.juggler.add(brawler);
 						}
 					}

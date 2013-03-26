@@ -65,7 +65,6 @@ package starling.display
     public class DisplayObjectContainer extends DisplayObject
     {
         // members
-        
         private var mChildren:Vector.<DisplayObject>;
         
         /** Helper objects. */
@@ -74,6 +73,7 @@ package starling.display
         private static var sBroadcastListeners:Vector.<DisplayObject> = new <DisplayObject>[];
         
         // construction
+        public static var checkBroadcastListener:Boolean = true;
         
         /** @private */
         public function DisplayObjectContainer()
@@ -90,11 +90,9 @@ package starling.display
         /** Disposes the resources of all children. */
         public override function dispose():void
         {
-            var numChildren:int = mChildren.length;
-            
-            for (var i:int=0; i<numChildren; ++i)
+            for (var i:int=mChildren.length-1; i>=0; --i)
                 mChildren[i].dispose();
-                
+            
             super.dispose();
         }
         
@@ -269,11 +267,10 @@ package starling.display
                 getTransformationMatrix(targetSpace, sHelperMatrix);
                 MatrixUtil.transformCoords(sHelperMatrix, 0.0, 0.0, sHelperPoint);
                 resultRect.setTo(sHelperPoint.x, sHelperPoint.y, 0, 0);
-                return resultRect;
             }
             else if (numChildren == 1)
             {
-                return mChildren[0].getBounds(targetSpace, resultRect);
+                resultRect = mChildren[0].getBounds(targetSpace, resultRect);
             }
             else
             {
@@ -290,8 +287,9 @@ package starling.display
                 }
                 
                 resultRect.setTo(minX, minY, maxX - minX, maxY - minY);
-                return resultRect;
             }                
+            
+            return resultRect;
         }
         
         /** @inheritDoc */
@@ -349,7 +347,7 @@ package starling.display
         /** Dispatches an event on all children (recursively). The event must not bubble. */
         public function broadcastEvent(event:Event):void
         {
-            if (event.bubbles)
+			if (event.bubbles)
                 throw new ArgumentError("Broadcast of bubbling events is prohibited");
             
             // The event listeners might modify the display tree, which could make the loop crash. 
@@ -358,7 +356,7 @@ package starling.display
             // care that the static helper vector does not get currupted.
             
             var fromIndex:int = sBroadcastListeners.length;
-            getChildEventListeners(this, event.type, sBroadcastListeners);
+			getChildEventListeners(this, event.type, sBroadcastListeners);
             var toIndex:int = sBroadcastListeners.length;
             
             for (var i:int=fromIndex; i<toIndex; ++i)

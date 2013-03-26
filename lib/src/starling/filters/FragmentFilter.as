@@ -10,8 +10,6 @@
 
 package starling.filters
 {
-    import com.adobe.utils.AGALMiniAssembler;
-    
     import flash.display3D.Context3D;
     import flash.display3D.Context3DProgramType;
     import flash.display3D.Context3DVertexBufferFormat;
@@ -37,25 +35,54 @@ package starling.filters
     import starling.events.Event;
     import starling.textures.Texture;
     import starling.utils.MatrixUtil;
+    import starling.utils.RectangleUtil;
     import starling.utils.VertexData;
     import starling.utils.getNextPowerOfTwo;
 
-    /** The FragmentFilter class is the base class for all filter effects.
-     *  
-     *  <p>All other filters of this package extend this class. You can attach them to any display
-     *  object through the 'filter' property. To combine several filters, group them in a 
-     *  'FilterChain' instance.</p>
-     *  
-     *  <p>Create your own filters by extending this class.</p>
+    /** The FragmentFilter class is the base class for all filter effects in Starling.
+     *  All other filters of this package extend this class. You can attach them to any display
+     *  object through the 'filter' property.
+     * 
+     *  <p>A fragment filter works in the following way:</p>
+     *  <ol>
+     *    <li>The object that is filtered is rendered into a texture (in stage coordinates).</li>
+     *    <li>That texture is passed to the first filter pass.</li>
+     *    <li>Each pass processes the texture using a fragment shader (and optionally a vertex 
+     *        shader) to achieve a certain effect.</li>
+     *    <li>The output of each pass is used as the input for the next pass; if it's the 
+     *        final pass, it will be rendered directly to the back buffer.</li>  
+     *  </ol>
+     * 
+     *  <p>All of this is set up by the abstract FragmentFilter class. Concrete subclasses
+     *  just need to override the protected methods 'createPrograms', 'activate' and 
+     *  (optionally) 'deactivate' to create and execute its custom shader code. Each filter
+     *  can be configured to either replace the original object, or be drawn below or above it.
+     *  This can be done through the 'mode' property, which accepts one of the Strings defined
+     *  in the 'FragmentFilterMode' class.</p>
+     * 
+     *  <p>Beware that each filter should be used only on one object at a time. Otherwise, it
+     *  will get slower and require more resources; and caching will lead to undefined
+     *  results.</p>
      */ 
     public class FragmentFilter
     {
+        /** All filter processing is expected to be done with premultiplied alpha. */
         protected const PMA:Boolean = true;
+        
+        /** The standard vertex shader code. It will be used automatically if you don't create
+         *  a custom vertex shader yourself. */
         protected const STD_VERTEX_SHADER:String = 
             "m44 op, va0, vc0 \n" + // 4x4 matrix transform to output space
             "mov v0, va1      \n";  // pass texture coordinates to fragment program
+        
+        /** The standard fragment shader code. It just forwards the texture color to the output. */
         protected const STD_FRAGMENT_SHADER:String =
             "tex oc, v0, fs0 <2d, clamp, linear, mipnone>"; // just forward texture color
+        
+        private var mVertexPosAtID:int = 0;
+        private var mTexCoordsAtID:int = 1;
+        private var mBaseTextureID:int = 0;
+        private var mMvpConstantID:int = 0;
         
         private var mNumPasses:int;
         private var mPassTextures:Vector.<Texture>;
@@ -78,8 +105,11 @@ package starling.filters
         /** helper objects. */
         private var mProjMatrix:Matrix = new Matrix();
         private static var sBounds:Rectangle  = new Rectangle();
+        private static var sStageBounds:Rectangle = new Rectangle();
         private static var sTransformationMatrix:Matrix = new Matrix();
         
+        /** Creates a new Fragment filter with the specified number of passes and resolution.
+         *  This constructor may only be called by the constructor of a subclass. */
         public function FragmentFilter(numPasses:int=1, resolution:Number=1.0)
         {
             if (Capabilities.isDebugger && 
@@ -111,12 +141,12 @@ package starling.filters
             // avoids memory leaks when people forget to call "dispose" on the filter.
             Starling.current.stage3D.addEventListener(Event.CONTEXT3D_CREATE, 
                 onContextCreated, false, 0, true);
-            
-            // TODO: intersect object bounds with stage bounds & set scissor rectangle accordingly
         }
         
+        /** Disposes the filter (programs, buffers, textures). */
         public function dispose():void
         {
+            Starling.current.stage3D.removeEventListener(Event.CONTEXT3D_CREATE, onContextCreated);
             if (mVertexBuffer) mVertexBuffer.dispose();
             if (mIndexBuffer)  mIndexBuffer.dispose();
             disposePassTextures();
@@ -132,6 +162,9 @@ package starling.filters
             createPrograms();
         }
         
+        /** Applies the filter on a certain display object, rendering the output into the current 
+         *  render target. This method is called automatically by Starling's rendering system 
+         *  for the object the filter is attached to. */
         public function render(object:DisplayObject, support:RenderSupport, parentAlpha:Number):void
         {
             // bottom layer
@@ -149,7 +182,7 @@ package starling.filters
             }
             
             if (mCache)
-                mCache.render(support, object.alpha * parentAlpha);
+                mCache.render(support, parentAlpha);
             else
                 renderPasses(object, support, parentAlpha, false);
             
@@ -170,13 +203,21 @@ package starling.filters
             if (stage   == null) throw new Error("Filtered object must be on the stage.");
             if (context == null) throw new MissingContextError();
             
+            // the bounds of the object in stage coordinates 
+            calculateBounds(object, stage, !intoCache, sBounds);
+            
+            if (sBounds.isEmpty())
+            {
+                disposePassTextures();
+                return intoCache ? new QuadBatch() : null; 
+            }
+            
+            updateBuffers(context, sBounds);
+            updatePassTextures(sBounds.width, sBounds.height, mResolution * scale);
+
             support.finishQuadBatch();
             support.raiseDrawCount(mNumPasses);
             support.pushMatrix();
-            
-            // force blend mode "normal" for filter passes
-            support.blendMode = BlendMode.NORMAL;
-            RenderSupport.setBlendFactors(PMA);
             
             // save original projection matrix and render target
             mProjMatrix.copyFrom(support.projectionMatrix); 
@@ -187,11 +228,6 @@ package starling.filters
                     "It's currently not possible to stack filters! " +
                     "This limitation will be removed in a future Stage3D version.");
             
-            // get bounds and update buffers and textures accordingly
-            calculateBounds(object, stage, sBounds);
-            updateBuffers(context, sBounds);
-            updatePassTextures(sBounds.width, sBounds.height, mResolution * scale);
-            
             if (intoCache) 
                 cacheTexture = Texture.empty(sBounds.width, sBounds.height, PMA, true, 
                                              mResolution * scale);
@@ -199,14 +235,19 @@ package starling.filters
             // draw the original object into a texture
             support.renderTarget = mPassTextures[0];
             support.clear();
+            support.blendMode = BlendMode.NORMAL;
             support.setOrthographicProjection(sBounds.x, sBounds.y, sBounds.width, sBounds.height);
             object.render(support, parentAlpha);
             support.finishQuadBatch();
             
             // prepare drawing of actual filter passes
+            RenderSupport.setBlendFactors(PMA);
             support.loadIdentity();  // now we'll draw in stage coordinates!
-            context.setVertexBufferAt(0, mVertexBuffer, VertexData.POSITION_OFFSET, Context3DVertexBufferFormat.FLOAT_2);
-            context.setVertexBufferAt(1, mVertexBuffer, VertexData.TEXCOORD_OFFSET, Context3DVertexBufferFormat.FLOAT_2);
+            
+            context.setVertexBufferAt(mVertexPosAtID, mVertexBuffer, VertexData.POSITION_OFFSET, 
+                                      Context3DVertexBufferFormat.FLOAT_2);
+            context.setVertexBufferAt(mTexCoordsAtID, mVertexBuffer, VertexData.TEXCOORD_OFFSET,
+                                      Context3DVertexBufferFormat.FLOAT_2);
             
             // draw all passes
             for (var i:int=0; i<mNumPasses; ++i)
@@ -228,8 +269,8 @@ package starling.filters
                     else
                     {
                         // draw into back buffer, at original (stage) coordinates
+                        support.projectionMatrix = mProjMatrix;
                         support.renderTarget = previousRenderTarget;
-                        support.projectionMatrix.copyFrom(mProjMatrix); // restore projection matrix
                         support.translateMatrix(mOffsetX, mOffsetY);
                         support.blendMode = object.blendMode;
                         support.applyBlendMode(PMA);
@@ -238,8 +279,9 @@ package starling.filters
                 
                 var passTexture:Texture = getPassTexture(i);
                 
-                context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, support.mvpMatrix3D, true);
-                context.setTextureAt(0, passTexture.base);
+                context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, mMvpConstantID, 
+                                                      support.mvpMatrix3D, true);
+                context.setTextureAt(mBaseTextureID, passTexture.base);
                 
                 activate(i, context, passTexture);
                 context.drawTriangles(mIndexBuffer, 0, 2);
@@ -247,9 +289,9 @@ package starling.filters
             }
             
             // reset shader attributes
-            context.setVertexBufferAt(0, null);
-            context.setVertexBufferAt(1, null);
-            context.setTextureAt(0, null);
+            context.setVertexBufferAt(mVertexPosAtID, null);
+            context.setVertexBufferAt(mTexCoordsAtID, null);
+            context.setTextureAt(mBaseTextureID, null);
             
             support.popMatrix();
             
@@ -327,9 +369,10 @@ package starling.filters
             return mPassTextures[pass % 2];
         }
         
-        /** Calculates the bounds of the filter in stage coordinates, making sure that the 
+        /** Calculates the bounds of the filter in stage coordinates, while making sure that the 
          *  according textures will have powers of two. */
-        private function calculateBounds(object:DisplayObject, stage:Stage, resultRect:Rectangle):void
+        private function calculateBounds(object:DisplayObject, stage:Stage, 
+                                         intersectWithStage:Boolean, resultRect:Rectangle):void
         {
             // optimize for full-screen effects
             if (object == stage || object == Starling.current.root)
@@ -337,16 +380,25 @@ package starling.filters
             else
                 object.getBounds(stage, resultRect);
             
-            // the bounds are a rectangle around the object, in stage coordinates,
-            // and with an optional margin. To fit into a POT-texture, it will grow towards
-            // the right and bottom.
-            var deltaMargin:Number = mResolution == 1.0 ? 0.0 : 1.0 / mResolution; // avoid hard edges
-            resultRect.x -= mMarginX + deltaMargin;
-            resultRect.y -= mMarginY + deltaMargin;
-            resultRect.width  += 2 * (mMarginX + deltaMargin);
-            resultRect.height += 2 * (mMarginY + deltaMargin);
-            resultRect.width  = getNextPowerOfTwo(resultRect.width  * mResolution) / mResolution;
-            resultRect.height = getNextPowerOfTwo(resultRect.height * mResolution) / mResolution;
+            if (intersectWithStage)
+            {
+                sStageBounds.setTo(0, 0, stage.stageWidth, stage.stageHeight);
+                RectangleUtil.intersect(resultRect, sStageBounds, resultRect);
+            }
+            
+            if (!resultRect.isEmpty())
+            {    
+                // the bounds are a rectangle around the object, in stage coordinates,
+                // and with an optional margin. To fit into a POT-texture, it will grow towards
+                // the right and bottom.
+                var deltaMargin:Number = mResolution == 1.0 ? 0.0 : 1.0 / mResolution; // avoid hard edges
+                resultRect.x -= mMarginX + deltaMargin;
+                resultRect.y -= mMarginY + deltaMargin;
+                resultRect.width  += 2 * (mMarginX + deltaMargin);
+                resultRect.height += 2 * (mMarginY + deltaMargin);
+                resultRect.width  = getNextPowerOfTwo(resultRect.width  * mResolution) / mResolution;
+                resultRect.height = getNextPowerOfTwo(resultRect.height * mResolution) / mResolution;
+            }
         }
         
         private function disposePassTextures():void
@@ -361,7 +413,7 @@ package starling.filters
         {
             if (mCache)
             {
-                mCache.texture.dispose();
+                if (mCache.texture) mCache.texture.dispose();
                 mCache.dispose();
                 mCache = null;
             }
@@ -369,47 +421,66 @@ package starling.filters
         
         // protected methods
 
+        /** Subclasses must override this method and use it to create their 
+         *  fragment- and vertex-programs. */
         protected function createPrograms():void
         {
             throw new Error("Method has to be implemented in subclass!");
         }
 
+        /** Subclasses must override this method and use it to activate their fragment- and 
+         *  to vertext-programs.
+         *  The 'activate' call directly precedes the call to 'context.drawTriangles'. Set up
+         *  the context the way your filter needs it. The following constants and attributes 
+         *  are set automatically:
+         *  
+         *  <ul><li>vertex constants 0-3: mvpMatrix (3D)</li>
+         *      <li>vertex attribute 0: vertex position (FLOAT_2)</li>
+         *      <li>vertex attribute 1: texture coordinates (FLOAT_2)</li>
+         *      <li>texture 0: input texture</li>
+         *  </ul>
+         *  
+         *  @param pass: the current render pass, starting with '0'. Multipass filters can
+         *               provide different logic for each pass.
+         *  @param context: the current context3D (the same as in Starling.context, passed
+         *               just for convenience)
+         *  @param texture: the input texture, which is already bound to sampler 0. */
         protected function activate(pass:int, context:Context3D, texture:Texture):void
         {
             throw new Error("Method has to be implemented in subclass!");
         }
         
+        /** This method is called directly after 'context.drawTriangles'. 
+         *  If you need to clean up any resources, you can do so in this method. */
         protected function deactivate(pass:int, context:Context3D, texture:Texture):void
         {
             // clean up resources
         }
         
+        /** Assembles fragment- and vertex-shaders, passed as Strings, to a Program3D. 
+         *  If any argument is  null, it is replaced by the class constants STD_FRAGMENT_SHADER or
+         *  STD_VERTEX_SHADER, respectively. */
         protected function assembleAgal(fragmentShader:String=null, vertexShader:String=null):Program3D
         {
             if (fragmentShader == null) fragmentShader = STD_FRAGMENT_SHADER;
             if (vertexShader   == null) vertexShader   = STD_VERTEX_SHADER;
             
-            var vertexProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-            vertexProgramAssembler.assemble(Context3DProgramType.VERTEX, vertexShader);
-            
-            var fragmentProgramAssembler:AGALMiniAssembler = new AGALMiniAssembler();
-            fragmentProgramAssembler.assemble(Context3DProgramType.FRAGMENT, fragmentShader);
-            
-            var context:Context3D = Starling.context;
-            var program:Program3D = context.createProgram();
-            program.upload(vertexProgramAssembler.agalcode, fragmentProgramAssembler.agalcode);          
-            
-            return program;
+            return RenderSupport.assembleAgal(vertexShader, fragmentShader);
         }
         
         // cache
         
+        /** Caches the filter output into a texture. An uncached filter is rendered in every frame;
+         *  a cached filter only once. However, if the filtered object or the filter settings
+         *  change, it has to be updated manually; to do that, call "cache" again. */
         public function cache():void
         {
             mCacheRequested = true;
             disposeCache();
         }
         
+        /** Clears the cached output of the filter. After calling this method, the filter will
+         *  be executed once per frame again. */ 
         public function clearCache():void
         {
             mCacheRequested = false;
@@ -418,6 +489,7 @@ package starling.filters
         
         // flattening
         
+        /** @private */
         starling_internal function compile(object:DisplayObject):QuadBatch
         {
             if (mCache) return mCache;
@@ -437,8 +509,13 @@ package starling.filters
         
         // properties
         
-        public function get isCached():Boolean { return mCache || mCacheRequested; }
+        /** Indicates if the filter is cached (via the "cache" method). */
+        public function get isCached():Boolean { return (mCache != null) || mCacheRequested; }
         
+        /** The resolution of the filter texture. "1" means stage resolution, "0.5" half the
+         *  stage resolution. A lower resolution saves memory and execution time (depending on 
+         *  the GPU), but results in a lower output quality. Values greater than 1 are allowed;
+         *  such values might make sense for a cached filter when it is scaled up. @default 1 */
         public function get resolution():Number { return mResolution; }
         public function set resolution(value:Number):void 
         {
@@ -446,22 +523,48 @@ package starling.filters
             else mResolution = value; 
         }
         
+        /** The filter mode, which is one of the constants defined in the "FragmentFilterMode" 
+         *  class. @default "replace" */
         public function get mode():String { return mMode; }
         public function set mode(value:String):void { mMode = value; }
         
+        /** Use the x-offset to move the filter output to the right or left. */
         public function get offsetX():Number { return mOffsetX; }
         public function set offsetX(value:Number):void { mOffsetX = value; }
         
+        /** Use the y-offset to move the filter output to the top or bottom. */
         public function get offsetY():Number { return mOffsetY; }
         public function set offsetY(value:Number):void { mOffsetY = value; }
         
+        /** The x-margin will extend the size of the filter texture along the x-axis.
+         *  Useful when the filter will "grow" the rendered object. */
         protected function get marginX():Number { return mMarginX; }
         protected function set marginX(value:Number):void { mMarginX = value; }
         
+        /** The y-margin will extend the size of the filter texture along the y-axis.
+         *  Useful when the filter will "grow" the rendered object. */
         protected function get marginY():Number { return mMarginY; }
         protected function set marginY(value:Number):void { mMarginY = value; }
         
+        /** The number of passes the filter is applied. The "activate" and "deactivate" methods
+         *  will be called that often. */
         protected function set numPasses(value:int):void { mNumPasses = value; }
         protected function get numPasses():int { return mNumPasses; }
+        
+        /** The ID of the vertex buffer attribute that stores the vertex position. */ 
+        protected final function get vertexPosAtID():int { return mVertexPosAtID; }
+        protected final function set vertexPosAtID(value:int):void { mVertexPosAtID = value; }
+        
+        /** The ID of the vertex buffer attribute that stores the texture coordinates. */
+        protected final function get texCoordsAtID():int { return mTexCoordsAtID; }
+        protected final function set texCoordsAtID(value:int):void { mTexCoordsAtID = value; }
+
+        /** The ID (sampler) of the input texture (containing the output of the previous pass). */
+        protected final function get baseTextureID():int { return mBaseTextureID; }
+        protected final function set baseTextureID(value:int):void { mBaseTextureID = value; }
+        
+        /** The ID of the first register of the modelview-projection constant (a 4x4 matrix). */
+        protected final function get mvpConstantID():int { return mMvpConstantID; }
+        protected final function set mvpConstantID(value:int):void { mMvpConstantID = value; }
     }
 }

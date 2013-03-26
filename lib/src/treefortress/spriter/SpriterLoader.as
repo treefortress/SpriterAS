@@ -124,7 +124,7 @@ package treefortress.spriter
 		
 		protected function buildAtlas():void {
 			
-			textureAtlas = AtlasBuilder.buildFromBitmaps(pieces, _textureScale, 2, 512, 512);
+			textureAtlas = AtlasBuilder.buildFromBitmaps(pieces, _textureScale, 2, 2048, 2048);
 			atlasXml = AtlasBuilder.atlasXml;
 			atlasBitmap = AtlasBuilder.atlasBitmap;
 			

@@ -26,13 +26,12 @@ package starling.animation
      *  <p>Here is an example of a tween that moves an object to the right, rotates it, and 
      *  fades it out:</p>
      *  
-     *  <pre>
+     *  <listing>
      *  var tween:Tween = new Tween(object, 2.0, Transitions.EASE_IN_OUT);
      *  tween.animate("x", object.x + 50);
      *  tween.animate("rotation", deg2rad(45));
      *  tween.fadeTo(0);    // equivalent to 'animate("alpha", 0)'
-     *  Starling.juggler.add(tween); 
-     *  </pre> 
+     *  Starling.juggler.add(tween);</listing> 
      *  
      *  <p>Note that the object is added to a juggler at the end of this sample. That's because a 
      *  tween will only be executed if its "advanceTime" method is executed regularly - the 
@@ -53,10 +52,12 @@ package starling.animation
 
         private var mOnStart:Function;
         private var mOnUpdate:Function;
+        private var mOnRepeat:Function;
         private var mOnComplete:Function;  
         
         private var mOnStartArgs:Array;
         private var mOnUpdateArgs:Array;
+        private var mOnRepeatArgs:Array;
         private var mOnCompleteArgs:Array;
         
         private var mTotalTime:Number;
@@ -65,10 +66,13 @@ package starling.animation
         private var mRoundToInt:Boolean;
         private var mNextTween:Tween;
         private var mRepeatCount:int;
+        private var mRepeatDelay:Number;
         private var mReverse:Boolean;
         private var mCurrentCycle:int;
         
-        /** Creates a tween with a target, duration (in seconds) and a transition function. 
+        /** Creates a tween with a target, duration (in seconds) and a transition function.
+         *  @param target the object that you want to animate
+         *  @param time the duration of the Tween
          *  @param transition can be either a String (e.g. one of the constants defined in the
          *         Transitions class) or a function. Look up the 'Transitions' class for a   
          *         documentation about the required function signature. */ 
@@ -83,7 +87,7 @@ package starling.animation
             mTarget = target;
             mCurrentTime = 0;
             mTotalTime = Math.max(0.0001, time);
-            mDelay = 0;
+            mDelay = mRepeatDelay = 0.0;
             mOnStart = mOnUpdate = mOnComplete = null;
             mOnStartArgs = mOnUpdateArgs = mOnCompleteArgs = null;
             mRoundToInt = mReverse = false;
@@ -104,15 +108,15 @@ package starling.animation
             return this;
         }
         
-        /** Animates the property of an object to a target value. You can call this method multiple
+        /** Animates the property of the target to a certain value. You can call this method multiple
          *  times on one tween. */
-        public function animate(property:String, targetValue:Number):void
+        public function animate(property:String, endValue:Number):void
         {
             if (mTarget == null) return; // tweening null just does nothing.
                    
             mProperties.push(property);
             mStartValues.push(Number.NaN);
-            mEndValues.push(targetValue);
+            mEndValues.push(endValue);
         }
         
         /** Animates the 'scaleX' and 'scaleY' properties of an object simultaneously. */
@@ -182,19 +186,36 @@ package starling.animation
             {
                 if (mRepeatCount == 0 || mRepeatCount > 1)
                 {
-                    mCurrentTime = 0.0;
+                    mCurrentTime = -mRepeatDelay;
                     mCurrentCycle++;
                     if (mRepeatCount > 1) mRepeatCount--;
+                    if (mOnRepeat != null) mOnRepeat.apply(null, mOnRepeatArgs);
                 }
                 else
                 {
-                    if (mOnComplete != null) mOnComplete.apply(null, mOnCompleteArgs);
+                    // save callback & args: they might be changed through an event listener
+                    var onComplete:Function = mOnComplete;
+                    var onCompleteArgs:Array = mOnCompleteArgs;
+                    
+                    // in the 'onComplete' callback, people might want to call "tween.reset" and
+                    // add it to another juggler; so this event has to be dispatched *before*
+                    // executing 'onComplete'.
                     dispatchEventWith(Event.REMOVE_FROM_JUGGLER);
+                    if (onComplete != null) onComplete.apply(null, onCompleteArgs);
                 }
             }
             
             if (carryOverTime) 
                 advanceTime(carryOverTime);
+        }
+        
+        /** The end value a certain property is animated to. Throws an ArgumentError if the 
+         *  property is not being animated. */
+        public function getEndValue(property:String):Number
+        {
+            var index:int = mProperties.indexOf(property);
+            if (index == -1) throw new ArgumentError("The property '" + property + "' is not animated");
+            else return mEndValues[index] as Number;
         }
         
         /** Indicates if the tween is finished. */
@@ -244,6 +265,10 @@ package starling.animation
         public function get repeatCount():int { return mRepeatCount; }
         public function set repeatCount(value:int):void { mRepeatCount = value; }
         
+        /** The amount of time to wait between repeat cycles, in seconds. @default 0 */
+        public function get repeatDelay():Number { return mRepeatDelay; }
+        public function set repeatDelay(value:Number):void { mRepeatDelay = value; }
+        
         /** Indicates if the tween should be reversed when it is repeating. If enabled, 
          *  every second repetition will be reversed. @default false */
         public function get reverse():Boolean { return mReverse; }
@@ -261,6 +286,11 @@ package starling.animation
         public function get onUpdate():Function { return mOnUpdate; }
         public function set onUpdate(value:Function):void { mOnUpdate = value; }
         
+        /** A function that will be called each time the tween finishes one repetition
+         *  (except the last, which will trigger 'onComplete'). */
+        public function get onRepeat():Function { return mOnRepeat; }
+        public function set onRepeat(value:Function):void { mOnRepeat = value; }
+        
         /** A function that will be called when the tween is complete. */
         public function get onComplete():Function { return mOnComplete; }
         public function set onComplete(value:Function):void { mOnComplete = value; }
@@ -272,6 +302,10 @@ package starling.animation
         /** The arguments that will be passed to the 'onUpdate' function. */
         public function get onUpdateArgs():Array { return mOnUpdateArgs; }
         public function set onUpdateArgs(value:Array):void { mOnUpdateArgs = value; }
+        
+        /** The arguments that will be passed to the 'onRepeat' function. */
+        public function get onRepeatArgs():Array { return mOnRepeatArgs; }
+        public function set onRepeatArgs(value:Array):void { mOnRepeatArgs = value; }
         
         /** The arguments that will be passed to the 'onComplete' function. */
         public function get onCompleteArgs():Array { return mOnCompleteArgs; }
@@ -298,8 +332,8 @@ package starling.animation
         starling_internal static function toPool(tween:Tween):void
         {
             // reset any object-references, to make sure we don't prevent any garbage collection
-            tween.mOnStart = tween.mOnUpdate = tween.mOnComplete = null;
-            tween.mOnStartArgs = tween.mOnUpdateArgs = tween.mOnCompleteArgs = null;
+            tween.mOnStart = tween.mOnUpdate = tween.mOnRepeat = tween.mOnComplete = null;
+            tween.mOnStartArgs = tween.mOnUpdateArgs = tween.mOnRepeatArgs = tween.mOnCompleteArgs = null;
             tween.mTarget = null;
             tween.mTransitionFunc = null;
             tween.removeEventListeners();

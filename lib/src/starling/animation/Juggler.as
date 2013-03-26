@@ -68,6 +68,12 @@ package starling.animation
             }
         }
         
+        /** Determines if an object has been added to the juggler. */
+        public function contains(object:IAnimatable):Boolean
+        {
+            return mObjects.indexOf(object) != -1;
+        }
+        
         /** Removes an object from the juggler. */
         public function remove(object:IAnimatable):void
         {
@@ -84,23 +90,45 @@ package starling.animation
         public function removeTweens(target:Object):void
         {
             if (target == null) return;
-            var numObjects:int = mObjects.length;
             
-            for (var i:int=numObjects-1; i>=0; --i)
+            for (var i:int=mObjects.length-1; i>=0; --i)
             {
                 var tween:Tween = mObjects[i] as Tween;
                 if (tween && tween.target == target)
+                {
+                    tween.removeEventListener(Event.REMOVE_FROM_JUGGLER, onRemove);
                     mObjects[i] = null;
+                }
             }
+        }
+        
+        /** Figures out if the juggler contains one or more tweens with a certain target. */
+        public function containsTweens(target:Object):Boolean
+        {
+            if (target == null) return false;
+            
+            for (var i:int=mObjects.length-1; i>=0; --i)
+            {
+                var tween:Tween = mObjects[i] as Tween;
+                if (tween && tween.target == target) return true;
+            }
+            
+            return false;
         }
         
         /** Removes all objects at once. */
         public function purge():void
         {
+            // the object vector is not purged right away, because if this method is called 
+            // from an 'advanceTime' call, this would make the loop crash. Instead, the
+            // vector is filled with 'null' values. They will be cleaned up on the next call
+            // to 'advanceTime'.
+            
             for (var i:int=mObjects.length-1; i>=0; --i)
             {
-                var dispatcher:EventDispatcher = mObjects.pop() as EventDispatcher;
+                var dispatcher:EventDispatcher = mObjects[i] as EventDispatcher;
                 if (dispatcher) dispatcher.removeEventListener(Event.REMOVE_FROM_JUGGLER, onRemove);
+                mObjects[i] = null;
             }
         }
         
@@ -126,6 +154,7 @@ package starling.animation
          *  
          *  <pre>
          *  juggler.tween(object, 2.0, {
+         *      transition: Transitions.EASE_IN_OUT,
          *      delay: 20, // -> tween.delay = 20
          *      x: 50      // -> tween.animate("x", 50)
          *  });
@@ -192,7 +221,7 @@ package starling.animation
                 numObjects = mObjects.length; // count might have changed!
                 
                 while (i < numObjects)
-                    mObjects[currentIndex++] = mObjects[i++];
+                    mObjects[int(currentIndex++)] = mObjects[int(i++)];
                 
                 mObjects.length = currentIndex;
             }

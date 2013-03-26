@@ -10,6 +10,7 @@ package treefortress.spriter
 	import starling.display.Sprite;
 	import starling.textures.Texture;
 	import starling.textures.TextureAtlas;
+	import starling.textures.TextureSmoothing;
 	
 	import treefortress.spriter.core.Animation;
 	import treefortress.spriter.core.Child;
@@ -268,27 +269,44 @@ package treefortress.spriter
 			//Small, Incremental interpolated update
 			if(position < endTime){
 				
-				lerpAmount = (position - startTime)/(endTime - startTime);
 				spinDir = 0;
 				
 				for(i = 0, l = frame.refs.length; i < l; i++){
-					timeline = animation.timelineList[frame.refs[i].timeline];
-					key = timeline.keys[frame.refs[i].key];
-					child = key.child;
 					
-					//Get child at next timeline position, if it can not be found, use the starting position
-					if(frame.refs[i].key >= timeline.keys.length - 1){
-						nextChild = timeline.keys[0].child;
-					} else {
-						nextChild = timeline.keys[frame.refs[i].key + 1].child;
+					//Get the most recent previous timeline for reference
+					timeline = animation.timelineList[frame.refs[i].timeline];
+					
+					var lerpStart:Number = startTime;
+					var lerpEnd:Number = endTime;
+					child = null;
+					nextChild = null;
+					key = timeline.keys[0];
+					
+					//Find the previous and next key's for this particular timeline.
+					for(var i2:int = 0, l2:int = timeline.keys.length; i2 < l2; i2++){
+						if(timeline.keys[i2].time > position){
+							if(!nextChild){
+								nextChild = timeline.keys[i2].child;
+								lerpEnd = timeline.keys[i2].time;
+							} else { break; }
+						} 
+						if(timeline.keys[i2].time <= position){
+							child = timeline.keys[i2].child;
+							lerpStart = timeline.keys[i2].time;
+						}
 					}
+					//If we couldn't find a next frame, this animation is probably missing an endFrame, use the startFrame instead
+					if(!nextChild){
+						nextChild = timeline.keys[0].child;
+						lerpEnd = endTime;
+					}
+					lerpAmount = (position - lerpStart)/(lerpEnd - lerpStart);
 					
 					image = imagesByTimeline[timeline.id];
 					if(!image){
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
 					}
-					
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
 					
@@ -326,10 +344,10 @@ package treefortress.spriter
 					}
 				}
 			}
-			
 		}
 		
-		protected function optimizedRemoveChildren():void {
+		[Inline]
+		final protected function optimizedRemoveChildren():void {
 			clearChildren = true;
 			if(container.numChildren > 0){
 				tmpNameHash = "";
@@ -344,12 +362,11 @@ package treefortress.spriter
 				}
 				nameHash = tmpNameHash
 			}
-			
 			if(clearChildren){ container.removeChildren(); } 
-			
 		}
 		
-		protected function updateCallbacks():void {
+		[Inline]
+		final protected function updateCallbacks():void {
 			for(var i:int = callbackList.length - 1; i >= 0; i--){
 				if(callbackList[i].time <= position && callbackList[i].called != true){
 					callbackList[i].call();
@@ -381,6 +398,7 @@ package treefortress.spriter
 			}
 			
 			var image:Image = new Image(texture);
+			//image.smoothing = TextureSmoothing.NONE;
 			image.name = name;
 			if(!isNaN(currentColor)){
 				image.color = currentColor;
@@ -480,6 +498,7 @@ class Callback {
 	public var call:Function;
 	public var time:int;
 	public var addOnce:Boolean;
+	public var called:Boolean;
 	
 	public function Callback(call:Function, time:int, addOnce:Boolean = false):void {
 		this.call = call;

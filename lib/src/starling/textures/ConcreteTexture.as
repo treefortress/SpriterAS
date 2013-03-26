@@ -64,7 +64,7 @@ package starling.textures
         {
             if (mData == null && data != null)
                 Starling.current.addEventListener(Event.CONTEXT3D_CREATE, onContextCreated);
-            if (data == null)
+            else if (data == null)
                 Starling.current.removeEventListener(Event.CONTEXT3D_CREATE, onContextCreated);
             
             mData = data;
@@ -102,6 +102,9 @@ package starling.textures
         public override function get base():TextureBase { return mBase; }
         
         /** @inheritDoc */
+        public override function get root():ConcreteTexture { return this; }
+        
+        /** @inheritDoc */
         public override function get format():String { return mFormat; }
         
         /** @inheritDoc */
@@ -109,6 +112,12 @@ package starling.textures
         
         /** @inheritDoc */
         public override function get height():Number { return mHeight / mScale; }
+        
+        /** @inheritDoc */
+        public override function get nativeWidth():Number { return mWidth; }
+        
+        /** @inheritDoc */
+        public override function get nativeHeight():Number { return mHeight; }
         
         /** The scale factor, which influences width and height properties. */
         public override function get scale():Number { return mScale; }

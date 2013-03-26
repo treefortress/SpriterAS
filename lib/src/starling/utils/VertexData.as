@@ -51,7 +51,7 @@ package starling.utils
         /** The offset of color data (r, g, b, a) within a vertex. */ 
         public static const COLOR_OFFSET:int = 2;
         
-        /** The offset of texture coordinate (u, v) within a vertex. */
+        /** The offset of texture coordinates (u, v) within a vertex. */
         public static const TEXCOORD_OFFSET:int = 6;
         
         private var mRawData:Vector.<Number>;
@@ -100,7 +100,7 @@ package starling.utils
             var dataLength:int = numVertices * ELEMENTS_PER_VERTEX;
             
             for (var i:int=sourceIndex; i<dataLength; ++i)
-                targetRawData[targetIndex++] = mRawData[i];
+                targetRawData[int(targetIndex++)] = mRawData[i];
         }
         
         /** Appends the vertices from another VertexData object. */
@@ -113,7 +113,7 @@ package starling.utils
             var rawDataLength:int = rawData.length;
             
             for (var i:int=0; i<rawDataLength; ++i)
-                mRawData[targetIndex++] = rawData[i];
+                mRawData[int(targetIndex++)] = rawData[i];
             
             mNumVertices += data.numVertices;
             mRawData.fixed = true;
@@ -151,7 +151,7 @@ package starling.utils
         public function getColor(vertexID:int):uint
         {
             var offset:int = getOffset(vertexID) + COLOR_OFFSET;
-            var divisor:Number = mPremultipliedAlpha ? mRawData[offset+3] : 1.0;
+            var divisor:Number = mPremultipliedAlpha ? mRawData[int(offset+3)] : 1.0;
             
             if (divisor == 0) return 0;
             else
@@ -293,7 +293,7 @@ package starling.utils
             
             if (transformationMatrix == null)
             {
-                for (i=vertexID; i<numVertices; ++i)
+                for (i=0; i<numVertices; ++i)
                 {
                     x = mRawData[offset];
                     y = mRawData[int(offset+1)];
@@ -307,7 +307,7 @@ package starling.utils
             }
             else
             {
-                for (i=vertexID; i<numVertices; ++i)
+                for (i=0; i<numVertices; ++i)
                 {
                     x = mRawData[offset];
                     y = mRawData[int(offset+1)];
@@ -354,7 +354,7 @@ package starling.utils
                 
                 for (var i:int=COLOR_OFFSET; i<dataLength; i += ELEMENTS_PER_VERTEX)
                 {
-                    var alpha:Number = mRawData[i+3];
+                    var alpha:Number = mRawData[int(i+3)];
                     var divisor:Number = mPremultipliedAlpha ? alpha : 1.0;
                     var multiplier:Number = value ? alpha : 1.0;
                     

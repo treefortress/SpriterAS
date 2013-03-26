@@ -27,7 +27,7 @@ package
 			//Use the SpriterLoader class to load individual SCML files, generate a TextureAtlas, and create AnimationSets, all at once.
 			spriterLoader = new SpriterLoader();
 			spriterLoader.completed.addOnce(onSpriterLoaderComplete);
-			spriterLoader.load(["assets/spriter/brawler/brawler.scml", "assets/spriter/orc/orc.scml"], textureScale);
+			spriterLoader.load(["assets/spriter/orc/orc.scml", "assets/spriter/brawler/brawler.scml"], textureScale);
 		}
 		
 		protected function onSpriterLoaderComplete(loader:SpriterLoader):void {
@@ -38,6 +38,7 @@ package
 			orc.scaleX = -1;
 			orc.y = 10;
 			orc.x = 200;
+			//orc.playbackSpeed = .1;
 			addChild(orc);
 			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 

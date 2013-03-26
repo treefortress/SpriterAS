@@ -8,6 +8,8 @@ package
 	import flash.utils.setTimeout;
 	
 	import starling.core.Starling;
+	import starling.display.DisplayObject;
+	import starling.display.DisplayObjectContainer;
 	import starling.display.Sprite;
 	
 	[SWF(width='700', height='350', backgroundColor="#FFFFFF")]
@@ -30,11 +32,15 @@ package
 			_stage.frameRate = 60;
 			setTimeout(initStarlng, 250);
 			
+			setTimeout(function(){
+				DisplayObjectContainer.checkBroadcastListener = false;
+			}, 2000);
+			
 		//Choose Example:
 			
 			//Simple demo showing the different method to loading a Spriter animation
 			currentExample = ExampleBasic;
-			currentExample = Benchmark;
+			//currentExample = Benchmark;
 			//Swap-Demo, showing a dynamic blink animation
 			//currentExample = ExampleSwapping;
 			

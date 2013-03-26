@@ -11,6 +11,7 @@
 package starling.core
 {
     import flash.geom.Point;
+    import flash.utils.getDefinitionByName;
     
     import starling.display.Stage;
     import starling.events.KeyboardEvent;
@@ -30,7 +31,6 @@ package starling.core
         
         private var mStage:Stage;
         private var mElapsedTime:Number;
-        private var mOffsetTime:Number;
         private var mTouchMarker:TouchMarker;
         
         private var mCurrentTouches:Vector.<Touch>;
@@ -47,17 +47,19 @@ package starling.core
         public function TouchProcessor(stage:Stage)
         {
             mStage = stage;
-            mElapsedTime = mOffsetTime = 0.0;
+            mElapsedTime = 0.0;
             mCurrentTouches = new <Touch>[];
             mQueue = new <Array>[];
             mLastTaps = new <Touch>[];
             
             mStage.addEventListener(KeyboardEvent.KEY_DOWN, onKey);
             mStage.addEventListener(KeyboardEvent.KEY_UP,   onKey);
+            monitorInterruptions(true);
         }
 
         public function dispose():void
         {
+            monitorInterruptions(false);
             mStage.removeEventListener(KeyboardEvent.KEY_DOWN, onKey);
             mStage.removeEventListener(KeyboardEvent.KEY_UP,   onKey);
             if (mTouchMarker) mTouchMarker.dispose();
@@ -70,7 +72,6 @@ package starling.core
             var touch:Touch;
             
             mElapsedTime += passedTime;
-            mOffsetTime = 0.0;
             
             // remove old taps
             if (mLastTaps.length > 0)
@@ -84,18 +85,10 @@ package starling.core
             {
                 sProcessedTouchIDs.length = sHoveringTouchData.length = 0;
                 
-                // update existing touches
+                // set touches that were new or moving to phase 'stationary'
                 for each (touch in mCurrentTouches)
-                {
-                    // set touches that were new or moving to phase 'stationary'
                     if (touch.phase == TouchPhase.BEGAN || touch.phase == TouchPhase.MOVED)
                         touch.setPhase(TouchPhase.STATIONARY);
-                    
-                    // check if target is still connected to stage, otherwise find new target
-                    if (touch.target && touch.target.stage == null)
-                        touch.setTarget(mStage.hitTest(
-                            new Point(touch.globalX, touch.globalY), true));
-                }
                 
                 // process new touches, but each ID only once
                 while (mQueue.length > 0 && 
@@ -107,40 +100,40 @@ package starling.core
                     
                     // hovering touches need special handling (see below)
                     if (touch && touch.phase == TouchPhase.HOVER && touch.target)
-                        sHoveringTouchData.push({ touch: touch, target: touch.target });
+                        sHoveringTouchData.push({ 
+                            touch: touch, 
+                            target: touch.target, 
+                            bubbleChain: touch.bubbleChain 
+                        });
                     
                     processTouch.apply(this, touchArgs);
                     sProcessedTouchIDs.push(touchID);
                 }
                 
-                // if the target of a hovering touch changed, we dispatch an event to the previous
+                // the same touch event will be dispatched to all targets; 
+                // the 'dispatch' method will make sure each bubble target is visited only once.
+                var touchEvent:TouchEvent = 
+                    new TouchEvent(TouchEvent.TOUCH, mCurrentTouches, mShiftDown, mCtrlDown); 
+                
+                // if the target of a hovering touch changed, we dispatch the event to the previous
                 // target to notify it that it's no longer being hovered over.
                 for each (var touchData:Object in sHoveringTouchData)
                     if (touchData.touch.target != touchData.target)
-                        touchData.target.dispatchEvent(new TouchEvent(
-                            TouchEvent.TOUCH, mCurrentTouches, mShiftDown, mCtrlDown));
+                        touchEvent.dispatch(touchData.bubbleChain);
                 
                 // dispatch events
                 for each (touchID in sProcessedTouchIDs)
-                {
-                    touch = getCurrentTouch(touchID);
-                    
-                    if (touch.target)
-                        touch.target.dispatchEvent(new TouchEvent(TouchEvent.TOUCH, mCurrentTouches,
-                                                                  mShiftDown, mCtrlDown));
-                }
+                    getCurrentTouch(touchID).dispatchEvent(touchEvent);
                 
                 // remove ended touches
                 for (i=mCurrentTouches.length-1; i>=0; --i)
                     if (mCurrentTouches[i].phase == TouchPhase.ENDED)
                         mCurrentTouches.splice(i, 1);
-                
-                // timestamps must differ for remaining touches
-                mOffsetTime += 0.00001;
             }
         }
         
-        public function enqueue(touchID:int, phase:String, globalX:Number, globalY:Number):void
+        public function enqueue(touchID:int, phase:String, globalX:Number, globalY:Number,
+                                pressure:Number=1.0, width:Number=1.0, height:Number=1.0):void
         {
             mQueue.unshift(arguments);
             
@@ -152,7 +145,37 @@ package starling.core
             }
         }
         
-        private function processTouch(touchID:int, phase:String, globalX:Number, globalY:Number):void
+        public function enqueueMouseLeftStage():void
+        {
+            var mouse:Touch = getCurrentTouch(0);
+            if (mouse == null || mouse.phase != TouchPhase.HOVER) return;
+            
+            // On OS X, we get mouse events from outside the stage; on Windows, we do not.
+            // This method enqueues an artifial hover point that is just outside the stage.
+            // That way, objects listening for HOVERs over them will get notified everywhere.
+            
+            var offset:int = 1;
+            var exitX:Number = mouse.globalX;
+            var exitY:Number = mouse.globalY;
+            var distLeft:Number = mouse.globalX;
+            var distRight:Number = mStage.stageWidth - distLeft;
+            var distTop:Number = mouse.globalY;
+            var distBottom:Number = mStage.stageHeight - distTop;
+            var minDist:Number = Math.min(distLeft, distRight, distTop, distBottom);
+            
+            // the new hover point should be just outside the stage, near the point where
+            // the mouse point was last to be seen.
+            
+            if (minDist == distLeft)       exitX = -offset;
+            else if (minDist == distRight) exitX = mStage.stageWidth + offset;
+            else if (minDist == distTop)   exitY = -offset;
+            else                           exitY = mStage.stageHeight + offset;
+            
+            enqueue(0, TouchPhase.HOVER, exitX, exitY);
+        }
+        
+        private function processTouch(touchID:int, phase:String, globalX:Number, globalY:Number,
+                                      pressure:Number=1.0, width:Number=1.0, height:Number=1.0):void
         {
             var position:Point = new Point(globalX, globalY);
             var touch:Touch = getCurrentTouch(touchID);
@@ -165,7 +188,9 @@ package starling.core
             
             touch.setPosition(globalX, globalY);
             touch.setPhase(phase);
-            touch.setTimestamp(mElapsedTime + mOffsetTime);
+            touch.setTimestamp(mElapsedTime);
+            touch.setPressure(pressure);
+            touch.setSize(width, height);
             
             if (phase == TouchPhase.HOVER || phase == TouchPhase.BEGAN)
                 touch.setTarget(mStage.hitTest(position, true));
@@ -198,10 +223,10 @@ package starling.core
                     // ... or start new one
                     else if (mCtrlDown && mouseTouch)
                     {
-                        if (mouseTouch.phase == TouchPhase.BEGAN || mouseTouch.phase == TouchPhase.MOVED)
-                            mQueue.unshift([1, TouchPhase.BEGAN, mTouchMarker.mockX, mTouchMarker.mockY]);
-                        else
+                        if (mouseTouch.phase == TouchPhase.HOVER || mouseTouch.phase == TouchPhase.ENDED)
                             mQueue.unshift([1, TouchPhase.HOVER, mTouchMarker.mockX, mTouchMarker.mockY]);
+                        else
+                            mQueue.unshift([1, TouchPhase.BEGAN, mTouchMarker.mockX, mTouchMarker.mockY]);
                     }
                 }
             }
@@ -271,6 +296,51 @@ package starling.core
                 mTouchMarker.removeFromParent(true);
                 mTouchMarker = null;
             }
+        }
+        
+        // interruption handling
+        
+        private function monitorInterruptions(enable:Boolean):void
+        {
+            // if the application moves into the background or is interrupted (e.g. through
+            // an incoming phone call), we need to abort all touches.
+            
+            try
+            {
+                var nativeAppClass:Object = getDefinitionByName("flash.desktop::NativeApplication");
+                var nativeApp:Object = nativeAppClass["nativeApplication"];
+                
+                if (enable)
+                    nativeApp.addEventListener("deactivate", onInterruption, false, 0, true);
+                else
+                    nativeApp.removeEventListener("activate", onInterruption);
+            }
+            catch (e:Error) {} // we're not running in AIR
+        }
+        
+        private function onInterruption(event:Object):void
+        {
+            var touch:Touch;
+            
+            // abort touches
+            for each (touch in mCurrentTouches)
+            {
+                if (touch.phase == TouchPhase.BEGAN || touch.phase == TouchPhase.MOVED ||
+                    touch.phase == TouchPhase.STATIONARY)
+                {
+                    touch.setPhase(TouchPhase.ENDED);
+                }
+            }
+            
+            // dispatch events
+            var touchEvent:TouchEvent = 
+                new TouchEvent(TouchEvent.TOUCH, mCurrentTouches, mShiftDown, mCtrlDown);
+            
+            for each (touch in mCurrentTouches)
+                touch.dispatchEvent(touchEvent);
+            
+            // purge touches
+            mCurrentTouches.length = 0;
         }
     }
 }

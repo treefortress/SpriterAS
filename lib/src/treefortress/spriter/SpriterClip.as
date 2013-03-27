@@ -140,8 +140,11 @@ package treefortress.spriter
 		}
 		
 		public function stop():void {
-			_isPlaying = false;
-			
+			_isPlaying = false;	
+		}
+		
+		public function clearCallbacks():void {
+			callbackList.length = 0;
 		}
 		
 		/** Hook for Starling Juggler Interface **/
@@ -194,6 +197,7 @@ package treefortress.spriter
 					}
 				} else { frameIndex = 0; }
 				
+				trace("ADVANCE FRAME: " + position);
 				//Animation complete?
 				if(position > animation.length){ 
 					position = 0; 
@@ -297,7 +301,10 @@ package treefortress.spriter
 						}
 					}
 					//If we couldn't find a next frame, this animation file is probably missing an endFrame. Substitute startFrame.
-					if(!nextChild){ nextChild = timeline.keys[0].child; }
+					if(!nextChild){ 
+						nextChild = timeline.keys[0].child; 
+						lerpEnd = animation.length;
+					}
 					
 					//Determine interpolation amount
 					lerpAmount = (position - lerpStart)/(lerpEnd - lerpStart);
@@ -309,6 +316,11 @@ package treefortress.spriter
 					}
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
+					
+					//DEBUG
+					//if(position > 580 && position < 635 && image.name == "goblin_backhand"){
+					//	trace(child.x * 2, nextChild.x * 2, endTime);
+					//}
 					
 					if(child.pixelPivotX != nextChild.pixelPivotX){
 						image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
@@ -434,7 +446,7 @@ package treefortress.spriter
 			return imagesByName[name];
 		}
 		
-		public function excludePiece(piece:*, ignore:Boolean):void {
+		public function excludePiece(piece:*, ignore:Boolean = true):void {
 			if(piece is String){
 				ignoredPieces[piece] = ignore;
 			} else if(piece is Image) {

@@ -17,6 +17,7 @@ package treefortress.spriter
 		public var pieces:Vector.<Piece>;
 		public var name:String;
 		
+		protected var piecesByFolderId:Object;
 		protected var animationsByName:Object = {};
 		protected var _scale:Number;
 		
@@ -27,16 +28,18 @@ package treefortress.spriter
 			_scale = scale;
 			
 			pieces = new <Piece>[];
+			piecesByFolderId = {};
 			for each(var folderXml:XML in data.folder){
+				var folderId:String = folderXml.@id;
 				for each(var file:XML in folderXml.file){
 					var piece:Piece = new Piece();
 					piece.id = file.@id;
+					piece.folder = folderId;
 					piece.name = prefix + file.@name;
 					piece.name = piece.name.split(".")[0];
-					
 					piece.width = file.@width * _scale;
 					piece.height = file.@height * _scale;
-					pieces.push(piece);					
+					piecesByFolderId[piece.folderId] = piece;					
 				}
 			}
 			
@@ -89,7 +92,7 @@ package treefortress.spriter
 						
 						//Ignore bones
 						if(!isBone){
-							child.piece = pieces[childData.@file];
+							child.piece = piecesByFolderId[childData.@folder + "_" + childData.@file];
 							child.pivotX = (childData.@pivot_x == undefined)? 0 : childData.@pivot_x;
 							child.pivotY = (childData.@pivot_y == undefined)? 1 : childData.@pivot_y;
 							child.pixelPivotX = child.piece.width * child.pivotX;

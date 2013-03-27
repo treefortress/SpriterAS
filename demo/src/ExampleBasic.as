@@ -27,18 +27,18 @@ package
 			//Use the SpriterLoader class to load individual SCML files, generate a TextureAtlas, and create AnimationSets, all at once.
 			spriterLoader = new SpriterLoader();
 			spriterLoader.completed.addOnce(onSpriterLoaderComplete);
-			spriterLoader.load(["assets/spriter/orc/orc.scml", "assets/spriter/brawler/brawler.scml"], textureScale);
+			spriterLoader.load(["assets/spriter/imp/imp.scml", "assets/spriter/brawler/brawler.scml"], textureScale);
 		}
 		
 		protected function onSpriterLoaderComplete(loader:SpriterLoader):void {
 			
 			//Add Orc 1
-			orc = spriterLoader.getSpriterClip("orc");
-			orc.play("run");
+			orc = spriterLoader.getSpriterClip("imp");
+			orc.play("hit");
 			orc.scaleX = -1;
-			orc.y = 10;
-			orc.x = 200;
-			//orc.playbackSpeed = .1;
+			orc.y = 310;
+			orc.x = 500;
+			orc.playbackSpeed = .05;
 			addChild(orc);
 			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 
@@ -63,7 +63,7 @@ package
 		protected function onCharacterTouched(event:TouchEvent):void {
 			var touch:Touch = event.touches[0];
 			if(touch.phase == TouchPhase.ENDED){
-				(event.currentTarget as SpriterClip).play("attack");
+				(event.currentTarget as SpriterClip).play("dead2");
 				(event.currentTarget as SpriterClip).animationComplete.addOnce(function(clip:SpriterClip){
 					clip.play((clip == brawler)? "idle" : "run");
 				});

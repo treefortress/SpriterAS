@@ -159,7 +159,7 @@ package treefortress.spriter
 			startTime = frame.time;
 			endTime = nextFrame? nextFrame.time : 0;
 			
-			if(endTime == 0){ endTime = animation.length; }
+			if(endTime == 0 || endTime > animation.length){ endTime = animation.length; }
 			lastTime = getTimer();
 			
 			//Determine whether we need to advance a frame
@@ -256,8 +256,7 @@ package treefortress.spriter
 					
 					image.scaleX = child.scaleX;
 					image.scaleY = child.scaleY;
-					
-					image.rotation = child.angle * TO_RADS;
+					image.rotation = fixRotation(child.angle) * TO_RADS;
 				}
 				//Measure this animation
 				if(isNaN(animationWidth) && isNaN(animationWidth) && frameIndex == 0){
@@ -284,22 +283,23 @@ package treefortress.spriter
 					
 					//Find the previous and next key's for this particular timeline.
 					for(var i2:int = 0, l2:int = timeline.keys.length; i2 < l2; i2++){
+						//Looks for end frame
 						if(timeline.keys[i2].time > position){
 							if(!nextChild){
 								nextChild = timeline.keys[i2].child;
 								lerpEnd = timeline.keys[i2].time;
 							} else { break; }
 						} 
+						//Look for start frame
 						if(timeline.keys[i2].time <= position){
 							child = timeline.keys[i2].child;
 							lerpStart = timeline.keys[i2].time;
 						}
 					}
-					//If we couldn't find a next frame, this animation is probably missing an endFrame, use the startFrame instead
-					if(!nextChild){
-						nextChild = timeline.keys[0].child;
-						lerpEnd = endTime;
-					}
+					//If we couldn't find a next frame, this animation file is probably missing an endFrame. Substitute startFrame.
+					if(!nextChild){ nextChild = timeline.keys[0].child; }
+					
+					//Determine interpolation amount
 					lerpAmount = (position - lerpStart)/(lerpEnd - lerpStart);
 					
 					image = imagesByTimeline[timeline.id];
@@ -333,17 +333,20 @@ package treefortress.spriter
 						//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)
 						angle1 = child.angle;
 						angle2 = nextChild.angle;
-						
 						rangeValue = angle2 - angle1;
-						
-						if (rangeValue > 180) { rangeValue -= 360; }
-						else if (rangeValue < -180) { rangeValue += 360; }
+						rangeValue = fixRotation(rangeValue);
 						
 						r = angle1 + rangeValue * lerpAmount;						
 						image.rotation = r * TO_RADS;
 					}
 				}
 			}
+		}
+		
+		protected function fixRotation(rotation:Number):Number {
+			if (rotation > 180) { rotation -= 360; }
+			else if (rotation < -180) { rotation += 360; }
+			return rotation;
 		}
 		
 		[Inline]

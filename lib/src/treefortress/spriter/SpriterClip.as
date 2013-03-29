@@ -197,7 +197,7 @@ package treefortress.spriter
 					}
 				} else { frameIndex = 0; }
 				
-				trace("ADVANCE FRAME: " + position);
+				//trace("ADVANCE FRAME: " + position);
 				//Animation complete?
 				if(position > animation.length){ 
 					position = 0; 
@@ -237,10 +237,11 @@ package treefortress.spriter
 					child = animation.timelineList[timelineId].keys[frame.refs[i].key].child;
 					if(!child.piece){ continue; }
 					
-					image = imagesByTimeline[timelineId];
+					image = imagesByTimeline[timelineId + "_" + child.piece.name];
+					trace(timelineId, child.piece.name);
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId] = image;
+						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
 					}
 					if(!image.parent){
 						container.addChild(image);
@@ -309,7 +310,7 @@ package treefortress.spriter
 					//Determine interpolation amount
 					lerpAmount = (position - lerpStart)/(lerpEnd - lerpStart);
 					
-					image = imagesByTimeline[timeline.id];
+					image = imagesByTimeline[timeline.id + "_" + child.piece.name];
 					if(!image){
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
@@ -403,6 +404,7 @@ package treefortress.spriter
 			//Check if there's an existing swap for this image
 			var swapName:String = name;
 			if(swapHash[name]){ swapName = swapHash[name]; }
+			trace("[CreateImage] " + name);
 			
 			var texture:Texture = getTexture(swapName);
 			//If we couldn't retrieve a swap, use the original as a fallback

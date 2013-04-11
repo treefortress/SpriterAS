@@ -40,7 +40,7 @@ package
 			
 			//Simple demo showing the different method to loading a Spriter animation
 			currentExample = ExampleBasic;
-			//currentExample = Benchmark;
+			currentExample = Benchmark;
 			//Swap-Demo, showing a dynamic blink animation
 			//currentExample = ExampleSwapping;
 			

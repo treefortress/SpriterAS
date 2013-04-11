@@ -33,17 +33,19 @@ package
 		protected function onSpriterLoaderComplete(loader:SpriterLoader):void {
 			
 			//Add Orc 1
-			orc = spriterLoader.getSpriterClip("imp");
-			orc.play("run", 0);
+			orc = spriterLoader.getSpriterClip("brawler");
+			orc.play("headSwap", 0);
 			orc.scaleX = -1;
 			orc.y = 50;
 			orc.x = 300;
-			orc.playbackSpeed = .1;
+			//orc.playbackSpeed = .1;
 			addChild(orc);
 			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 
 			//The Starling Juggler is a simple way to do that.
 			Starling.juggler.add(orc);
+			
+			return;
 			
 			//Add a "Brawler"
 			brawler = spriterLoader.getSpriterClip("brawler");

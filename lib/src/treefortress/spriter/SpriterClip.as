@@ -1,11 +1,13 @@
 package treefortress.spriter
 {
 	
+	import flash.utils.Dictionary;
 	import flash.utils.getTimer;
 	
 	import org.osflash.signals.Signal;
 	
 	import starling.animation.IAnimatable;
+	import starling.display.BlendMode;
 	import starling.display.Image;
 	import starling.display.Sprite;
 	import starling.textures.Texture;
@@ -34,6 +36,7 @@ package treefortress.spriter
 		protected var imagesByTimeline:Object;
 		protected var imagesByName:Object;
 		protected var texturesByName:Object;
+		protected var texturesByImage:Dictionary;
 		
 		protected var _isPlaying:Boolean;
 		protected var currentColor:Number;
@@ -90,6 +93,7 @@ package treefortress.spriter
 			texturesByName = {};
 			imagesByName = {};
 			ignoredPieces = {};
+			texturesByImage = new Dictionary(true);
 			
 			container = new Sprite();
 			addChild(container);
@@ -237,16 +241,21 @@ package treefortress.spriter
 					child = animation.timelineList[timelineId].keys[frame.refs[i].key].child;
 					if(!child.piece){ continue; }
 					
-					image = imagesByTimeline[timelineId + "_" + child.piece.name];
-					trace(timelineId, child.piece.name);
+					//Create one image/timeline, and cache it off.
+					image = imagesByTimeline[timelineId];
 					if(!image){
 						image = createImageByName(child.piece.name);
-						imagesByTimeline[timelineId + "_" + child.piece.name] = image;
+						imagesByTimeline[timelineId] = image;
 					}
+					//Add the child to displayList if it isn't already
 					if(!image.parent){
 						container.addChild(image);
 					}
-					
+					//Make sure the image has the textures it's supposed to (one timeline can have multiple images). 
+					if(texturesByImage[image] != getTexture(child.piece.name)){
+						texturesByImage[image] = getTexture(child.piece.name);
+						image.texture = texturesByImage[image];
+					}
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
 					
@@ -310,7 +319,7 @@ package treefortress.spriter
 					//Determine interpolation amount
 					lerpAmount = (position - lerpStart)/(lerpEnd - lerpStart);
 					
-					image = imagesByTimeline[timeline.id + "_" + child.piece.name];
+					image = imagesByTimeline[timeline.id];
 					if(!image){
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
@@ -367,18 +376,18 @@ package treefortress.spriter
 			clearChildren = true;
 			if(container.numChildren > 0){
 				tmpNameHash = "";
-				for(i = 0, l = frame.refs.length; i < l; i++){
-					timelineId = frame.refs[i].timeline;
-					image = imagesByTimeline[timelineId];
-					if(!image){ break; }
-					tmpNameHash += image.name;
+				for(i = 0, l = container.numChildren; i < l; i++){
+					tmpNameHash += container.getChildAt(i).name + "|";
 				}
 				if(tmpNameHash == nameHash && nameHash != ""){
 					clearChildren = false;
 				}
 				nameHash = tmpNameHash
 			}
-			if(clearChildren){ container.removeChildren(); } 
+			if(clearChildren){ 
+				trace("Remove Children");
+				container.removeChildren(); 
+			} 
 		}
 		
 		[Inline]
@@ -404,7 +413,7 @@ package treefortress.spriter
 			//Check if there's an existing swap for this image
 			var swapName:String = name;
 			if(swapHash[name]){ swapName = swapHash[name]; }
-			trace("[CreateImage] " + name);
+			//trace("[CreateImage] " + name);
 			
 			var texture:Texture = getTexture(swapName);
 			//If we couldn't retrieve a swap, use the original as a fallback

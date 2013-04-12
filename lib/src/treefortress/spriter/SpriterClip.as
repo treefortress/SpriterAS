@@ -37,6 +37,7 @@ package treefortress.spriter
 		protected var imagesByName:Object;
 		protected var texturesByName:Object;
 		protected var texturesByImage:Dictionary;
+		protected var childImages:Vector.<Image>;
 		
 		protected var _isPlaying:Boolean;
 		protected var currentColor:Number;
@@ -94,6 +95,7 @@ package treefortress.spriter
 			imagesByName = {};
 			ignoredPieces = {};
 			texturesByImage = new Dictionary(true);
+			childImages = new <Image>[];
 			
 			container = new Sprite();
 			addChild(container);
@@ -234,7 +236,7 @@ package treefortress.spriter
 				firstRun = container.numChildren == 0;
 				//Optimization, check whether we need to remove any children?
 				optimizedRemoveChildren();
-				//container.removeChildren();
+				childImages.length = 0;
 				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timelineId = frame.refs[i].timeline;
@@ -247,6 +249,8 @@ package treefortress.spriter
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
 					}
+					childImages[i] = image;
+					
 					//Add the child to displayList if it isn't already
 					if(!image.parent){
 						container.addChild(image);
@@ -378,10 +382,10 @@ package treefortress.spriter
 		[Inline]
 		final protected function optimizedRemoveChildren():void {
 			clearChildren = true;
-			if(container.numChildren > 0){
+			if(childImages.length > 0){
 				tmpNameHash = "";
-				for(i = 0, l = container.numChildren; i < l; i++){
-					tmpNameHash += container.getChildAt(i).name + "|";
+				for(i = 0, l = childImages.length; i < l; i++){
+					tmpNameHash += childImages[i].name + "|";
 				}
 				if(tmpNameHash == nameHash && nameHash != ""){
 					clearChildren = false;

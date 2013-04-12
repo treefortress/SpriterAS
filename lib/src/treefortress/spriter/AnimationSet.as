@@ -83,6 +83,7 @@ package treefortress.spriter
 						child.x = childData.@x * scale;
 						child.y = childData.@y * scale;
 						child.angle = childData.@angle;
+						child.alpha = (childData.@a == undefined)? 1 : childData.@a;
 						
 						//Convert to flash degrees (spriters uses 0-360, flash used 0-180 and -180 to -1)
 						var rotation:Number = child.angle;

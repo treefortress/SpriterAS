@@ -27,25 +27,23 @@ package
 			//Use the SpriterLoader class to load individual SCML files, generate a TextureAtlas, and create AnimationSets, all at once.
 			spriterLoader = new SpriterLoader();
 			spriterLoader.completed.addOnce(onSpriterLoaderComplete);
-			spriterLoader.load(["assets/spriter/imp/imp.scml", "assets/spriter/brawler/brawler.scml"], textureScale);
+			spriterLoader.load(["assets/spriter/orc/orc.scml", "assets/spriter/brawler/brawler.scml"], textureScale);
 		}
 		
 		protected function onSpriterLoaderComplete(loader:SpriterLoader):void {
 			
 			//Add Orc 1
-			orc = spriterLoader.getSpriterClip("brawler");
-			orc.play("headSwap", 0);
+			orc = spriterLoader.getSpriterClip("orc");
+			orc.play("run", 0);
 			orc.scaleX = -1;
 			orc.y = 50;
 			orc.x = 300;
-			//orc.playbackSpeed = .1;
+			orc.playbackSpeed = .5;
 			addChild(orc);
 			
 			//For performance reasons, SpriterClips will not update themselves, they must externally ticked each frame. 
 			//The Starling Juggler is a simple way to do that.
 			Starling.juggler.add(orc);
-			
-			return;
 			
 			//Add a "Brawler"
 			brawler = spriterLoader.getSpriterClip("brawler");
@@ -65,7 +63,7 @@ package
 		protected function onCharacterTouched(event:TouchEvent):void {
 			var touch:Touch = event.touches[0];
 			if(touch.phase == TouchPhase.ENDED){
-				(event.currentTarget as SpriterClip).play("dead2");
+				(event.currentTarget as SpriterClip).play("attack");
 				(event.currentTarget as SpriterClip).animationComplete.addOnce(function(clip:SpriterClip){
 					clip.play((clip == brawler)? "idle" : "run");
 				});

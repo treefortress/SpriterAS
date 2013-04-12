@@ -11,6 +11,7 @@ package treefortress.spriter.core
 		public var scaleX:Number = 0;
 		public var scaleY:Number = 1;
 		public var angle:Number;
+		public var alpha:Number;
 		
 		public var pixelPivotX:int;
 		public var pixelPivotY:int;

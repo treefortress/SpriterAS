@@ -350,6 +350,10 @@ package treefortress.spriter
 					if(child.scaleY != nextChild.scaleY){
 						image.scaleY = lerp(child.scaleY, nextChild.scaleY, lerpAmount);
 					}
+					if(child.alpha != nextChild.alpha){
+						image.alpha = lerp(child.alpha, nextChild.alpha, lerpAmount);
+					}
+					
 					if(child.angle != nextChild.angle){
 						
 						//Rotate to closest direction (ignore 'dir' for now, it's unsupported in the current Spriter A4 build)

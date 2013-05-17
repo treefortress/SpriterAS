@@ -34,7 +34,10 @@ package
 			
 			//Add Orc 1
 			orc = spriterLoader.getSpriterClip("orc");
-			orc.play("run", 0);
+			orc.play("attack2", 0);
+			orc.animationComplete.add(function(clip:SpriterClip){
+				orc.play("dead", 0);
+			});
 			orc.scaleX = -1;
 			orc.y = 50;
 			orc.x = 300;

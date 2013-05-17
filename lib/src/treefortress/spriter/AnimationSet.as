@@ -35,8 +35,12 @@ package treefortress.spriter
 					var piece:Piece = new Piece();
 					piece.id = file.@id;
 					piece.folder = folderId;
-					piece.name = prefix + file.@name;
+					piece.name = file.@name;
 					piece.name = piece.name.split(".")[0];
+					//Strip preceding classes (Spriter is injecting them for no reason. Bug?)
+					if(piece.name.substr(0, 1) == "/"){
+						piece.name = piece.name.substr(1);
+					}
 					piece.width = file.@width * _scale;
 					piece.height = file.@height * _scale;
 					piecesByFolderId[piece.folderId] = piece;					
@@ -78,6 +82,7 @@ package treefortress.spriter
 							childData = keyData..bone[0];
 							isBone = true;
 						}
+						if(!childData || childData.@file == undefined){ continue; }
 						
 						var child:Child = new Child();
 						child.x = childData.@x * scale;

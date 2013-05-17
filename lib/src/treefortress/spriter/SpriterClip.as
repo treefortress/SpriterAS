@@ -25,7 +25,7 @@ package treefortress.spriter
 		protected static var TO_RADS:Number = Math.PI/180;
 		
 		// Protected
-		protected var container:Sprite;
+		public var container:Sprite;
 		
 		protected var frameIndex:int = 0;
 		protected var frame:MainlineKey;
@@ -207,7 +207,6 @@ package treefortress.spriter
 				//Animation complete?
 				if(position > animation.length){ 
 					position = 0; 
-					animationComplete.dispatch(this);
 					
 					//Reset all callbacks, TODO: Check if any callbacks on this final frame?
 					for(i = callbackList.length - 1; i >= 0; i--){
@@ -219,8 +218,9 @@ package treefortress.spriter
 						frameIndex = 0;
 					} else {
 						_isPlaying = false;
-						return;
 					}
+					animationComplete.dispatch(this);
+					if(!_isPlaying){ return; }	
 				}
 				
 				if(frameIndex > 0 || animation.looping){
@@ -240,6 +240,7 @@ package treefortress.spriter
 				
 				for(i = 0, l = frame.refs.length; i < l; i++){
 					timelineId = frame.refs[i].timeline;
+					if(animation.timelineList[timelineId].keys.length == 0){ continue; }
 					child = animation.timelineList[timelineId].keys[frame.refs[i].key].child;
 					if(!child.piece){ continue; }
 					
@@ -249,7 +250,7 @@ package treefortress.spriter
 						image = createImageByName(child.piece.name);
 						imagesByTimeline[timelineId] = image;
 					}
-					childImages[i] = image;
+					childImages.push(image);
 					
 					//Add the child to displayList if it isn't already
 					if(!image.parent){
@@ -292,6 +293,7 @@ package treefortress.spriter
 					
 					//Get the most recent previous timeline for reference
 					timeline = animation.timelineList[frame.refs[i].timeline];
+					if(!timeline.keys.length){ continue; }
 					
 					var lerpStart:Number = startTime;
 					var lerpEnd:Number = endTime;
@@ -330,11 +332,6 @@ package treefortress.spriter
 					}
 					//If this piece is set to be ignored, do not update any of it's position data
 					if(ignoredPieces[image.name]){ continue; }
-					
-					//DEBUG
-					//if(position > 580 && position < 635 && image.name == "goblin_backhand"){
-					//	trace(child.x * 2, nextChild.x * 2, endTime);
-					//}
 					
 					if(child.pixelPivotX != nextChild.pixelPivotX){
 						image.pivotX = lerp(child.pixelPivotX, nextChild.pixelPivotX, lerpAmount);
@@ -393,7 +390,7 @@ package treefortress.spriter
 				nameHash = tmpNameHash
 			}
 			if(clearChildren){ 
-				trace("Remove Children");
+				//trace("Remove Children");
 				container.removeChildren(); 
 			} 
 		}
@@ -418,6 +415,7 @@ package treefortress.spriter
 		}
 		
 		protected function createImageByName(name:String):Image {
+			
 			//Check if there's an existing swap for this image
 			var swapName:String = name;
 			if(swapHash[name]){ swapName = swapHash[name]; }
@@ -483,6 +481,7 @@ package treefortress.spriter
 			}
 			
 			var newTex:Texture = getTexture(newPiece);
+			if(!newTex){ newTex = getTexture(newPiece); } //Check for preceding forward slash, newer versions of Spriter seem to add this.
 			if(!newTex){ return; } //Can't swap if we can't find this textures
 			
 			var image:Image;

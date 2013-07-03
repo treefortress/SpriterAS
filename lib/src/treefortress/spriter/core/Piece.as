@@ -7,6 +7,8 @@ package treefortress.spriter.core
 		public var name:String;
 		public var width:int;
 		public var height:int;
+		public var pivotX:Number;
+		public var pivotY:Number;
 		
 		public function Piece() {
 		}
@@ -14,7 +16,5 @@ package treefortress.spriter.core
 		public function get folderId():String {
 			return folder + "_" + id;
 		}
-		
-		
 	}
 }

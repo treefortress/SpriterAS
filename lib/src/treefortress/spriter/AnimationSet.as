@@ -43,7 +43,9 @@ package treefortress.spriter
 					}
 					piece.width = file.@width * _scale;
 					piece.height = file.@height * _scale;
-					piecesByFolderId[piece.folderId] = piece;					
+					piece.pivotX = (file.@pivot_x == undefined)? 0 : file.@pivot_x;
+					piece.pivotY = (file.@pivot_y == undefined)? 1 : file.@pivot_y;
+					piecesByFolderId[piece.folderId] = piece;
 				}
 			}
 			
@@ -99,8 +101,8 @@ package treefortress.spriter
 						//Ignore bones
 						if(!isBone){
 							child.piece = piecesByFolderId[childData.@folder + "_" + childData.@file];
-							child.pivotX = (childData.@pivot_x == undefined)? 0 : childData.@pivot_x;
-							child.pivotY = (childData.@pivot_y == undefined)? 1 : childData.@pivot_y;
+							child.pivotX = (childData.@pivot_x == undefined)? child.piece.pivotX : childData.@pivot_x;
+							child.pivotY = (childData.@pivot_y == undefined)? child.piece.pivotY : childData.@pivot_y;
 							child.pixelPivotX = child.piece.width * child.pivotX;
 							child.pixelPivotY = child.piece.height * (1 - child.pivotY);
 						}
